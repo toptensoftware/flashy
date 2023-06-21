@@ -71,7 +71,7 @@ endif
 
 # Main Rules
 TOOLCHAIN = gcc
-include ../Rules/rules.mk
+include ../Rules/Rules.mk
 
 # Link
 $(TARGET): $(PRECOMPILE_TARGETS) $(OBJS) $(LINKPROJECTLIBS)
