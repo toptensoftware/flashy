@@ -112,7 +112,7 @@ On devices that have an activity indicator, the bootloader provides the followin
 ## Running under WSL-2
 
 WSL2 is a great development environment for bare metal Raspberry Pi projects however its lack
-or support for USB serial ports makes it difficult to flash a connected device.
+of support for USB serial ports makes it difficult to flash a connected device.
 
 There's a couple of solutions for this:
 
@@ -120,9 +120,9 @@ There's a couple of solutions for this:
 * Install Flashy on both the Windows host and the WSL2 operating system and let it find itself.
 
 When flashy is launched in a WSL-2 environment with a `/dev/ttyS*` serial port name it will
-attempt to relaunch itself as a Windows process where it has access to serial ports.  
-For this to work, Flashy needs to be installed as an npm global tool on the Windows host
-machine as well as the WSL guest operating system.
+attempt to relaunch itself as a Windows process from where it has access to serial ports. For this 
+to work, Flashy needs to be installed as an npm global tool on both the Windows host
+machine and the WSL guest operating system.
 
 ie: 
 
@@ -137,23 +137,32 @@ find itself in Windows and relaunch itself automatically.
 ## Command Line Options
 
 ```
-Usage: node flashy <serialport> [<hexfile>] [options]
-All-In-One Reboot, Flash and Monitor Tool
+Flashy 2.0.4
+All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal
+
+Copyright (C) 2023 Topten Software
+Portions of bootloader Copyright (c) 2012 David Welch dwelch@dwelch.com
+
+Usage: flashy <serialport> [<hexfile>] [options]
 
 <serialport>            Serial port to write to
 <hexfile>               The .hex file to write (optional)
---flashBaud:<N>         Baud rate for flashing (default=115200)
+--flashBaud:<N>         Baud rate for flashing (default=1000000)
 --userBaud:<N>          Baud rate for monitor and reboot magic (default=115200)
+--reboot:<magic>        Sends a magic reboot string at user baud before flashing
 --noGo                  Don't send the go command after flashing
 --go                    Send the go command, even if not flashing
 --goDelay:<ms>          Sets a delay period for the go command
---reboot:<magic>        Sends a magic reboot string at user baud before flashing
 --packetSize:<N>        Size of data chunks transmitted (default=4096)
 --packetTimeout:<N>     Time out to receive packet ack in millis (default=300ms)
 --pingAttmempts:<T>     How many times to ping for device before giving up (default=10)
 --serialLog:<file>      File to write low level log of serial comms
---resetBaudTimeout:<N>  How long device should wait for packet before resetting to 
-                        the default baud (default=2500ms)
+--resetBaudTimeout:<N>  How long device should wait for packet before resetting
+                        to the default baud (default=2500ms)
+--bootloader[:<dir>]    Save the bootloader kernel images to directory <dir>
+                        or the current directory if <dir> not specified.  Requires
+                        `unzip` executable installed on path
+--cwd:<dir>             Change current directory
 --monitor               Monitor serial port
 --help                  Show this help
 ```
