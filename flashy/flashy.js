@@ -189,8 +189,8 @@ async function sendHexFile(layer, hexFile)
                 // Check the selected packet size is supported by the bootloader
                 if (cl.packetSize > ping.maxPacketSize)
                 {
-                    process.stderr.write(`Packet size ${cl.packetSize} exceeds supported packet size of bootloader ${r.maxPacketSize}.`);
-                    process.steerr.write(`Please choose a smaller packet size, or rebuild the bootloader with a larger max_packet_size setting.`);
+                    process.stderr.write(`Packet size ${cl.packetSize} exceeds supported packet size of bootloader ${ping.maxPacketSize}.\n`);
+                    process.stderr.write(`Please choose a smaller packet size, or rebuild the bootloader with a larger max_packet_size setting.\n`);
                     process.exit(7);
                 }
     
