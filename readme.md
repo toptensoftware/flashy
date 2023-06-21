@@ -18,6 +18,7 @@ All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal.
 * Supports serial port monitoring after flashing
 * Delayed image starts (by timeout, or by command)
 * Includes packaged pre-compiled bootloader images
+* Activity indicator shows ready status feedback
 
 
 
@@ -94,6 +95,17 @@ flashy kernel7.hex /dev/ttyS3 --flashBaud:2000000 --reboot:yourmagicstring --mon
 ```
 
 Run `flashy --help` for more details, or see below.
+
+
+
+## Activity LED
+
+On devices that have an activity indicator, the bootloader provides the following feedback:
+
+* When idle, ready to receive and the default baud rate is active, the led flashes in a heartbeat
+  pattern (2 flashes in quick succession every 1 second).
+* When receiving data, the activity LED toggles on receipt of every packet.
+* Otherwise the LED is off.
 
 
 

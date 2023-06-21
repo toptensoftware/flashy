@@ -11,14 +11,27 @@
 #include "BCM2835.h" /* Original B,A,A+,B+ */
 #endif
 
+
 #define ARM_TIMER_CTL   (PBASE+0x0000B408)
 #define ARM_TIMER_CNT   (PBASE+0x0000B420)
 
+#define GPFSEL0	        (PBASE+0x00200000)
 #define GPFSEL1         (PBASE+0x00200004)
 #define GPSET0          (PBASE+0x0020001C)
 #define GPCLR0          (PBASE+0x00200028)
+#define GPLEV0          (PBASE+0x00200034)
+
+
 #define GPPUD           (PBASE+0x00200094)
 #define GPPUDCLK0       (PBASE+0x00200098)
+
+#ifdef RPI4
+#define GPPINMUXSD	    (PBASE+0x002000D0)
+#define GPPUPPDN0	    (PBASE+0x002000E4)
+#define GPPUPPDN1	    (PBASE+0x002000E8)
+#define GPPUPPDN2	    (PBASE+0x002000EC)
+#define GPPUPPDN3	    (PBASE+0x002000F0)
+#endif
 
 #define AUX_ENABLES     (PBASE+0x00215004)
 #define AUX_MU_IO_REG   (PBASE+0x00215040)
@@ -32,6 +45,9 @@
 #define AUX_MU_CNTL_REG (PBASE+0x00215060)
 #define AUX_MU_STAT_REG (PBASE+0x00215064)
 #define AUX_MU_BAUD_REG (PBASE+0x00215068)
+
+
+
 
 //GPIO14  TXD0 and TXD1
 //GPIO15  RXD0 and RXD1
@@ -364,6 +380,169 @@ void *memcpy (void *pDest, const void *pSrc, size_t nLength)
         *pd++ = *ps++;
     return pDest;
 
+}
+
+
+// Given a board revision, return which gpio pin has the activity led
+// Returns negitive number if active low
+// Returns 0 if not supported
+int led_pin_from_revision(unsigned revision)
+{
+    if (revision & (1 << 23))
+    {
+        // new revision
+        switch ((revision >> 4) & 0xFF)
+        {
+            case 0: return -16;
+            case 1: return -16;
+            case 2: return 47;
+            case 3: return 47;
+            case 4: return 47;
+            case 6: return 47;
+            case 8: return 0;
+            case 9: return -47;
+            case 10: return 0;
+            case 12: return -47;
+            case 13: return 29;
+            case 14: return 29;
+            case 16: return 0;
+            case 17: return 42;
+            case 18: return -29;
+            case 19: return 42;
+            case 20: return 42;
+            case 21: return 0;
+        }
+    }
+    else
+    {
+        switch (revision)
+        {
+            case 0x02: return -16;
+            case 0x03: return -16;
+            case 0x04: return -16;
+            case 0x05: return -16;
+            case 0x06: return -16;
+            case 0x07: return -16;
+            case 0x08: return -16;
+            case 0x09: return -16;
+            case 0x0D: return -16;
+            case 0x0E: return -16;
+            case 0x0F: return -16;
+            case 0x10: return 47;
+            case 0x11: return 47;
+            case 0x12: return 47;
+            case 0x13: return 47;
+            case 0x14: return 47;
+            case 0x15: return 47;
+        }
+    }
+
+    return 0;
+}
+
+// Get the register offset and mask for a gpio pin
+void gpio_to_register(unsigned pin, unsigned* pRegOffset, unsigned* pRegMask)
+{
+	*pRegOffset = (pin / 32) * 4;
+	*pRegMask = 1 << (pin % 32);
+}
+
+// Write to an GPIO output pin
+void write_gpio(unsigned pin, unsigned value)
+{
+    // Get register offset and mask
+    unsigned regOffset, regMask;
+    gpio_to_register(pin, &regOffset, &regMask);
+
+    // Write
+	unsigned nSetClrReg = (value ? GPSET0 : GPCLR0) + regOffset;
+	PUT32(nSetClrReg, regMask);
+}
+
+// Read from a GPIO input pin
+unsigned read_gpio(unsigned pin)
+{
+    // Get register offset and mask
+    unsigned regOffset, regMask;
+    gpio_to_register(pin, &regOffset, &regMask);
+
+    // Read
+	return GET32 (GPLEV0 + regOffset) & regMask ? 1 : 0;
+}
+
+// Set a GPIO pin as input or output
+void set_gpio_output(unsigned pin, int output)
+{
+    unsigned nSelReg = GPFSEL0 + (pin / 10) * 4;
+	unsigned nShift = (pin % 10) * 3;
+
+	unsigned nValue = GET32 (nSelReg);
+	nValue &= ~(7 << nShift);
+	nValue |= (output ? 1 : 0) << nShift;
+	PUT32 (nSelReg, nValue);
+}
+
+// Set the pull up mode on a GPIO pin
+// 0 = no pullup
+// 1 = pull down
+// 2 = pull up
+void set_gpio_pull_mode(unsigned pin, int mode)
+{
+    // Get register offset and mask
+    unsigned regOffset, regMask;
+    gpio_to_register(pin, &regOffset, &regMask);
+
+#ifdef RPI4
+
+	unsigned nModeReg = GPPUPPDN0 + (pin / 16) * 4;
+	unsigned nShift = (pin % 16) * 2;
+	static const unsigned ModeMap[3] = {0, 2, 1};
+	unsigned nValue = GET32 (nModeReg);
+	nValue &= ~(3 << nShift);
+	nValue |= ModeMap[mode] << nShift;
+	PUT32 (nModeReg, nValue);
+
+#else
+
+	unsigned nClkReg = GPPUDCLK0 + regOffset;
+	PUT32 (GPPUD, mode);
+	delay_micros (5);		// 1us should be enough, but to be sure
+	PUT32 (nClkReg, regMask);
+	delay_micros (5);		// 1us should be enough, but to be sure
+	PUT32 (GPPUD, 0);
+	PUT32 (nClkReg, 0);
+
+#endif
+
+}
+
+int g_activityLed = -1;
+unsigned g_activityLedPolarity = 0;
+
+void set_activity_led(unsigned on)
+{
+    // First time?
+    if (g_activityLed == -1)
+    {
+        unsigned rev = get_board_revision();
+        g_activityLed = led_pin_from_revision(rev);
+        if (g_activityLed == 0)
+            return;
+
+        // Handle active low
+        if (g_activityLed < 0)
+        {
+            g_activityLed = -g_activityLed;
+            g_activityLedPolarity = 1;
+        }
+
+        // Setup pin
+        set_gpio_output(g_activityLed, 1);
+        set_gpio_pull_mode(g_activityLed, 0);
+    }
+
+    // Set it
+    write_gpio(g_activityLed, on ^ g_activityLedPolarity);
 }
 
 

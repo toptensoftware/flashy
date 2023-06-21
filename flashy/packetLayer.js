@@ -4,6 +4,7 @@
 // Handles sending and receiving encoded packets to/from device
 
 let packenc = require('./packetEncoder');
+let piModel = require('./piModel');
 
 
 // Packet ID's
@@ -180,7 +181,7 @@ function layer(port, options)
 
                 if (showDeviceInfo)
                 {
-                    process.stdout.write(` (found device: loader: v${r.version} board rev: ${format_hex(r.boardRevision, 8)}, serial: ${format_hex(r.boardSerialHi, 8)}-${format_hex(r.boardserialLo, 8)}, max packet: ${r.maxPacketSize})`);
+                    process.stdout.write(` (found device: ${piModel.piModelFromRevision(r.boardRevision).name}, serial: ${format_hex(r.boardSerialHi, 8)}-${format_hex(r.boardserialLo, 8)}, loader: v${r.version}, max packet: ${r.maxPacketSize})`);
                 }
                 process.stdout.write("\n");
                 return r;

@@ -13,10 +13,10 @@
             ],
             "type": "node",
             "args": [
-                "/dev/ttyS3", "--monitor"
+                "/dev/ttyS3",
+                "../ccw/sample/01-blink/bin/debug/kernel.hex"
             ],
             "console": "integratedTerminal"
         }
-
-       ]
+    ]
 }

@@ -34,6 +34,13 @@ void uart_send_hex8 (int val);
 void uart_send_str(const char* psz);
 void delay_micros(unsigned int period);
 
+void gpio_to_register(unsigned pin, unsigned* pRegOffset, unsigned* pRegMask);
+void write_gpio(unsigned pin, unsigned value);
+unsigned read_gpio(unsigned pin);
+void set_gpio_pull_mode(unsigned pin, int mode);
+
+int led_pin_from_revision(unsigned revision);
+void set_activity_led(unsigned on);
 
 //-------------------------------------------------------------------------
 //-------------------------------------------------------------------------

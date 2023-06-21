@@ -97,6 +97,9 @@ void sendPacket(uint32_t seq, uint32_t id, const void* pData, uint32_t cbData)
 // Receive a packet from the host
 void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
 {
+    // Flash activity led
+    set_activity_led(seq & 1);
+
     // Store packet time
     last_received_packet_time = timer_tick();
 
@@ -231,13 +234,24 @@ int notmain ( void )
         while ((recv_byte = uart_try_recv()) >= 0)
             packet_decode(&ctx, recv_byte);
 
+        unsigned tick = timer_tick();
+
         // If no packets received at non-standard baud rate, then switch
         // back to the default
         if (current_baud != default_baud && reset_baud_timeout_millis != 0 && 
-            timer_tick() - last_received_packet_time > (reset_baud_timeout_millis * 1000))
+            tick - last_received_packet_time > (reset_baud_timeout_millis * 1000))
         {
             current_baud = default_baud;
             uart_init(current_baud);
+        }
+
+        // When in default baud mode and it's been more than a second since
+        // received a packet, flash the alive heart beat
+        if (current_baud == default_baud && tick - last_received_packet_time > 500000)
+        {
+            // Flash LED 2 times every half second
+            unsigned insec = (tick / 1000) % 1000;
+            set_activity_led(insec < 500 ? ((insec / 125) & 1) : 0);
         }
     }
 }
