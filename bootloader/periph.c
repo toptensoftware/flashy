@@ -327,7 +327,7 @@ static unsigned get_clock_rate(unsigned tag)
 		CODE_REQUEST,
 		tag,
 		2*4,
-		0,
+		1*4,
 
 		CLOCK_ID_ARM,
 		0,
@@ -364,18 +364,17 @@ void set_clock_rate(uint32_t value)
 {
 	unsigned proptag[] __attribute__ ((aligned (16))) =
 	{
-		16*4,
+		9*4,
 		CODE_REQUEST,
 		PROPTAG_SET_CLOCK_RATE,
 		3*4,
-		0,
+		3*4,
 
 		CLOCK_ID_ARM,
 		value,
         0, //SKIPSETTINGTURBO
 
 		PROPTAG_END,
-        0,0,0,0,0,0,0
 	};
 
 	mbox_writeread ((unsigned) (unsigned long) &proptag);
