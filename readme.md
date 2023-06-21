@@ -7,7 +7,7 @@ All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal.
 ## Features
 
 * Binary mode transfers (faster than sending .hex file as text)
-* Strong packet encoding with crc32 and all packets acknowledged by host for rebustness
+* Strong packet encoding with crc32 and all packets acknowledged by device for rebustness
 * Stateless device side bootloader for reliable recovery and restart
 * Dynamic baud-rate switching (saves updating kernel image on device to switch baud rate)
 * Automatic idle time baud rate reset (for recovery)    
