@@ -4,24 +4,6 @@ All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal.
 
 
 
-## Rationale
-
-Flashy v2 is a complete re-write of Flashy v1 and the original bootloader program.  The 
-entire project has been cleaned up, refactored and re-engineered with a focus on robustness.
-
-While Flashy v1 could provide very fast flash times it often suffered from reliability and
-recovery issues.  It typically saturated the host device serial port write buffer and just
-hoped the device could keep up.
-
-This version moves to a strongly encoded packet format with 32-bit checksums and ack messages 
-for all packet transmissions.  It also offers several other improvements and new features
-(see below).
-
-For simplicity, this version is incompatible with previous versions of the bootloader and 
-requires the a bootloader image be installed on the target device. 
-
-
-
 ## Features
 
 * Binary mode transfers (faster than sending .hex file as text)
@@ -39,11 +21,29 @@ requires the a bootloader image be installed on the target device.
 
 
 
+## Rationale for v2
+
+Flashy v2 is a complete re-write of Flashy v1 and the original bootloader program.  The 
+entire project has been cleaned up, refactored and re-engineered with a focus on robustness.
+
+While Flashy v1 could provide very fast flash times it often suffered from reliability and
+recovery issues.  It typically saturated the host device serial port write buffer and just
+hoped the device could keep up.
+
+This version moves to a strongly encoded packet format with 32-bit checksums and ack messages 
+for all packet transmissions.  It also offers several other improvements and new features
+(see above).
+
+For simplicity, this version is incompatible with previous versions of the bootloader and 
+requires the included bootloader images be installed on the target device. 
+
+
+
 ## Installation
 
-Flashy v2 is written in JavaScript and requires NodeJS to be installed.
+Flashy is written in JavaScript and requires NodeJS to be installed.
 
-Once NodeJS (and npm) installed, install flashy:
+Assuming node and npm are installed, install flashy as follows;
 
 ```
 sudo npm install -g @toptensoftware/flashy
@@ -58,7 +58,7 @@ to be installed on the target device.
 Pre-compiled kernel images are included and can be extracted with the
 `--bootloader` option.  
 
-eg: To place a copy of the kernel images in the current directory:
+eg: To place a copy of the kernel images in the current directory just run:
 
 ```
 flashy --bootloader:.
@@ -67,7 +67,7 @@ flashy --bootloader:.
 
 ## Manually Running Flashy
 
-A typical command line to reboot the device, flash an image and start monitoring the serial port looks like this:
+A typical command line to reboot the device, flash an image and start monitoring looks like this:
 
 ```
 flashy kernel.hex /dev/ttyS3 --flashBaud:1000000 --reboot:yourmagicstring --monitor
@@ -103,4 +103,4 @@ All-In-One Reboot, Flash and Monitor Tool
 
 ## License
 
-See LICENSE file.
+Apache 2.0.  See LICENSE file.
