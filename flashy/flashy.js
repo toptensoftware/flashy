@@ -13,35 +13,13 @@ let serial = require('./serial');
 let packetLayer = require('./packetLayer');
 let intelHex = require('./intelHex');
 let cl = require('./commandLine');
+let wslUtils = require('./wslUtils');
 
-
-// This is a hacky fix for when launched from within a WSL session (possibly
-// related to Windows 11) where the SerialPort module fails with overlapped
-// I/O errors.  No sure why this happens but only seems to occur in the process
-// launched immediately from WSL.
-// As a work around, we simply respawn ourself with the same arguments + an
-// additional "--no-respawn" flag so we know not to do this again.
-if (os.platform() == 'win32' && cl.serialPortName && cl.serialPortName.startsWith(`/dev/ttyS`))
+// If running under WSL2 and trying to use a regular serial port
+// relaunch self as a Windows process
+if (wslUtils.isWsl2() && cl.serialPortName && cl.serialPortName.startsWith("/dev/ttyS"))
 {
-    if (!cl.noRespawn)
-    {
-        // Use same args, but add the --no-respawn flag
-        let args = process.argv.slice(1);
-        args.push("--no-respawn");
-
-        // Respawn
-        let r = child_process.spawnSync(
-            process.argv[0], 
-            args,
-            { 
-                stdio: 'inherit', 
-                shell: false
-            }
-        );
-        
-        // Quit with exit code of child process
-        process.exit(r.status);
-    }
+    process.exit(wslUtils.runSelfUnderWindows());
 }
     
 // Send a hex file to device
@@ -71,7 +49,7 @@ async function sendHexFile(layer, hexFile)
             throw new Error("Unexpected data after EOF record in hex file");
 
         // Handle record
-        switch (record.type)
+    switch (record.type)
         {
             case '00':
                 // DATA

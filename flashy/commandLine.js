@@ -34,6 +34,7 @@ function showHelp()
     console.log("--bootloader[:<dir>]    Save the bootloader kernel images to directory <dir>");
     console.log("                        or the current directory if <dir> not specified.  Requires");
     console.log("                        `unzip` executable installed on path");
+    console.log("--cwd:<dir>             Change current directory");
     console.log(`--monitor               Monitor serial port`);
     console.log(`--help                  Show this help`);
 }
@@ -58,7 +59,6 @@ function parseCommandLine()
         nogoSwitch: false,
         rebootMagic: null,
         monitor: false,
-        noRespawn: false,
         goDelay: 0,
         packetSize: 4096,
         packetTimeout: 300,
@@ -131,11 +131,15 @@ function parseCommandLine()
                     break;
 
                 case "bootloader":
-                    cl.bootloader = value ?? ".";
+                    cl.bootloader = value || ".";
                     break;
 
-                case "no-respawn":
-                    cl.noRespawn = true;
+                case "cwd":
+                    process.chdir(value);
+                    break;
+
+                case "showargs":
+                    console.log(process.argv);
                     break;
 
                 default:

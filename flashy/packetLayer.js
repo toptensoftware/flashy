@@ -22,7 +22,7 @@ function layer(port, options)
         max_packet_size: 1024,
         packet_ack_timeout: 300,
         ping_attempts: 10,
-    }, options ?? {})
+    }, options || {})
 
     // Callback to be invoked on receipt of ack packet
     let ack_notify = null;

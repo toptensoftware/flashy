@@ -13,7 +13,7 @@
             ],
             "type": "node",
             "args": [
-                "--bootloader"
+                "/dev/ttyS3", "--monitor"
             ],
             "console": "integratedTerminal"
         }

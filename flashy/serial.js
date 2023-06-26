@@ -67,7 +67,7 @@ function serialPort(serialPortName, options)
     if (os.platform() == 'win32' && serialPortName.startsWith(`/dev/ttyS`))
     {
         let remapped = `COM` + serialPortName.substr(9);
-        log && log(`Using '${remapped}' instead of WSL port '${serialPortName}'.`)
+        log && log(`Using '${remapped}' instead of WSL port '${serialPortName}'.\n`)
         serialPortName = remapped;
     }
 

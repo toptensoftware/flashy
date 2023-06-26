@@ -49,11 +49,14 @@ Assuming node and npm are installed, install flashy as follows;
 sudo npm install -g @toptensoftware/flashy
 ```
 
+See notes below on using Flashy under WSL 2.
+
+
 
 ## Setup - Bootloader
 
 Flashy v2 is incompatible with previous versions and requires a new bootloader image
-to be installed on the target device.
+to be installed on the target device's SD card.
 
 Pre-compiled kernel images are included and can be extracted with the
 `--bootloader` option.  
@@ -65,6 +68,7 @@ flashy --bootloader:.
 ```
 
 
+
 ## Manually Running Flashy
 
 A typical command line to reboot the device, flash an image and start monitoring looks like this:
@@ -74,6 +78,31 @@ flashy kernel.hex /dev/ttyS3 --flashBaud:1000000 --reboot:yourmagicstring --moni
 ```
 
 Run `flashy --help` for more details, or see below.
+
+
+
+## Running under WSL-2
+
+WSL2 is a great development environment for bare metal Raspberry Pi projects however its lack
+or support for USB serial ports makes it difficult to flash a connected device.
+
+There's a couple of solutions for this:
+
+* Use USBIPD as [described here](https://learn.microsoft.com/en-us/windows/wsl/connect-usb), or
+* Install Flashy on both Windows host and the WSL2 operating system and let it find itself.
+
+When flashy is launched in a WSL2 environment with a `/dev/ttyS*` serial port name it will
+attempt to relaunch itself as a Windows process where it does have access to serial ports.  
+For this to work, Flashy needs to be installed as an npm global tool on the Windows host
+machine as well as the WSL guest operating system.
+
+ie: 
+
+* on Windows run: `npm install -g @toptensoftware/flashy`
+* and on WSL/Linux run: `sudo npm install -g @toptensoftware/flashy`
+
+Once installed in both environments, Flashy will detect when you're using a serial port, 
+find itself in Windows and relaunch itself automatically.
 
 
 
@@ -100,6 +129,8 @@ All-In-One Reboot, Flash and Monitor Tool
 --monitor               Monitor serial port
 --help                  Show this help
 ```
+
+
 
 ## License
 
