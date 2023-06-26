@@ -1,0 +1,5 @@
+#!/bin/bash
+x=$(wslpath -w $(pwd))
+pushd /mnt/c > /dev/null
+cmd.exe "/c pushd $x && "$*
+popd > /dev/null

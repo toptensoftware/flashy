@@ -1,0 +1,38 @@
+{
+  "name": "@toptensoftware/flashy",
+  "version": "2.0.0",
+  "description": "All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal",
+  "main": "flashy.js",
+  "dependencies": {
+    "serialport": "^9.0.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Topten Software",
+  "contributors": [
+    {
+      "name": "Brad Robinson",
+      "email": "contact@toptensoftware.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toptensoftware/flashy"
+  },
+  "license": "Apache",
+  "bin": {
+    "flashy": "./flashy.js"
+  },
+  "preferGlobal": true,
+  "keywords": [
+    "pi",
+    "raspi",
+    "raspberry pi",
+    "bare metal",
+    "bootloader",
+    "flash tool",
+    "flasher"
+  ]
+}

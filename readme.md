@@ -1,0 +1,106 @@
+# Flashy v2
+
+All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal.
+
+
+
+## Rationale
+
+Flashy v2 is a complete re-write of Flashy v1 and the original bootloader program.  The 
+entire project has been cleaned up, refactored and re-engineered with a focus on robustness.
+
+While Flashy v1 could provide very fast flash times it often suffered from reliability and
+recovery issues.  It typically saturated the host device serial port write buffer and just
+hoped the device could keep up.
+
+This version moves to a strongly encoded packet format with 32-bit checksums and ack messages 
+for all packet transmissions.  It also offers several other improvements and new features
+(see below).
+
+For simplicity, this version is incompatible with previous versions of the bootloader and 
+requires the a bootloader image be installed on the target device. 
+
+
+
+## Features
+
+* Binary mode transfers (faster than sending .hex file as text)
+* Strong packet encoding with crc32 and all packets acknowledged by host for rebustness
+* Stateless device side bootloader for reliable recovery and restart
+* Dynamic baud-rate switching (saves updating kernel image on device to switch baud rate)
+* Automatic idle time baud rate reset (for recovery)    
+* Configurable packet size and timeout for flexibility with different devices
+* Host side .hex file parsing and re-chunking for packet size balancing and simpler
+  device side implementation
+* Supports sending magic reboot strings
+* Supports serial port monitoring after flashing
+* Delayed image starts (by timeout, or by command)
+* Includes packaged pre-compiled bootloader images
+
+
+
+## Installation
+
+Flashy v2 is written in JavaScript and requires NodeJS to be installed.
+
+Once NodeJS (and npm) installed, install flashy:
+
+```
+sudo npm install -g @toptensoftware/flashy
+```
+
+
+## Setup - Bootloader
+
+Flashy v2 is incompatible with previous versions and requires a new bootloader image
+to be installed on the target device.
+
+Pre-compiled kernel images are included and can be extracted with the
+`--bootloader` option.  
+
+eg: To place a copy of the kernel images in the current directory:
+
+```
+flashy --bootloader:.
+```
+
+
+## Manually Running Flashy
+
+A typical command line to reboot the device, flash an image and start monitoring the serial port looks like this:
+
+```
+flashy kernel.hex /dev/ttyS3 --flashBaud:1000000 --reboot:yourmagicstring --monitor
+```
+
+Run `flashy --help` for more details, or see below.
+
+
+
+## Command Line Options
+
+```
+Usage: node flashy <serialport> [<hexfile>] [options]
+All-In-One Reboot, Flash and Monitor Tool
+
+<serialport>            Serial port to write to
+<hexfile>               The .hex file to write (optional)
+--flashBaud:<N>         Baud rate for flashing (default=115200)
+--userBaud:<N>          Baud rate for monitor and reboot magic (default=115200)
+--noGo                  Don't send the go command after flashing
+--go                    Send the go command, even if not flashing
+--goDelay:<ms>          Sets a delay period for the go command
+--reboot:<magic>        Sends a magic reboot string at user baud before flashing
+--packetSize:<N>        Size of data chunks transmitted (default=4096)
+--packetTimeout:<N>     Time out to receive packet ack in millis (default=300ms)
+--pingAttmempts:<T>     How many times to ping for device before giving up (default=10)
+--serialLog:<file>      File to write low level log of serial comms
+--resetBaudTimeout:<N>  How long device should wait for packet before resetting to 
+                        the default baud (default=2500ms)
+--monitor               Monitor serial port
+--help                  Show this help
+```
+
+## License
+
+See LICENSE file.

@@ -1,0 +1,8 @@
+node_modules
+*.img
+*.o
+*.elf
+*.lst
+*.d
+*.map
+*.zip
