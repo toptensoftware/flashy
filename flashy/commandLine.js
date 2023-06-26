@@ -19,7 +19,7 @@ function showHelp()
     console.log();
     console.log(`<serialport>            Serial port to write to`);
     console.log(`<hexfile>               The .hex file to write (optional)`);
-    console.log(`--flashBaud:<N>         Baud rate for flashing (default=115200)`);
+    console.log(`--flashBaud:<N>         Baud rate for flashing (default=1000000)`);
     console.log(`--userBaud:<N>          Baud rate for monitor and reboot magic (default=115200)`);
     console.log(`--reboot:<magic>        Sends a magic reboot string at user baud before flashing`);
     console.log(`--noGo                  Don't send the go command after flashing`);
@@ -53,7 +53,7 @@ function parseCommandLine()
     let cl = {
         hexFile: null,
         serialPortName: null,
-        flashBaud: 115200,
+        flashBaud: 1000000,
         userBaud: 115200,
         goSwitch: false,
         nogoSwitch: false,

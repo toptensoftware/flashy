@@ -27,15 +27,31 @@ Flashy v2 is a complete re-write of Flashy v1 and the original bootloader progra
 entire project has been cleaned up, refactored and re-engineered with a focus on robustness.
 
 While Flashy v1 could provide very fast flash times it often suffered from reliability and
-recovery issues.  It typically saturated the host device serial port write buffer and just
-hoped the device could keep up.
+recovery issues.  It typically just saturated the serial port write buffer and hoped the 
+device could keep up.
 
 This version moves to a strongly encoded packet format with 32-bit checksums and ack messages 
-for all packet transmissions.  It also offers several other improvements and new features
+for all host to device transmissions.  It also offers several other improvements and new features
 (see above).
 
 For simplicity, this version is incompatible with previous versions of the bootloader and 
 requires the included bootloader images be installed on the target device. 
+
+
+
+## Quick Guide
+
+1. Install Flashy (see notes below if running under WSL2)
+
+        > npm install -g @toptensoftware/flashy
+
+2. Copy the new bootloader kernel images to the Raspberry Pi SD card
+
+        > flashy --bootloader:path_to_your_sd_card
+
+3. Use it!  eg: to reboot, flash and then monitor the serial port:
+
+        > flashy kernel.hex /dev/ttyS3 --reboot:yourmagicstring --monitor
 
 
 
@@ -74,7 +90,7 @@ flashy --bootloader:.
 A typical command line to reboot the device, flash an image and start monitoring looks like this:
 
 ```
-flashy kernel.hex /dev/ttyS3 --flashBaud:1000000 --reboot:yourmagicstring --monitor
+flashy kernel7.hex /dev/ttyS3 --flashBaud:2000000 --reboot:yourmagicstring --monitor
 ```
 
 Run `flashy --help` for more details, or see below.
@@ -89,10 +105,10 @@ or support for USB serial ports makes it difficult to flash a connected device.
 There's a couple of solutions for this:
 
 * Use USBIPD as [described here](https://learn.microsoft.com/en-us/windows/wsl/connect-usb), or
-* Install Flashy on both Windows host and the WSL2 operating system and let it find itself.
+* Install Flashy on both the Windows host and the WSL2 operating system and let it find itself.
 
-When flashy is launched in a WSL2 environment with a `/dev/ttyS*` serial port name it will
-attempt to relaunch itself as a Windows process where it does have access to serial ports.  
+When flashy is launched in a WSL-2 environment with a `/dev/ttyS*` serial port name it will
+attempt to relaunch itself as a Windows process where it has access to serial ports.  
 For this to work, Flashy needs to be installed as an npm global tool on the Windows host
 machine as well as the WSL guest operating system.
 
