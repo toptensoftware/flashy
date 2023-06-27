@@ -24,7 +24,8 @@ unsigned last_received_packet_time = 0;
 // received packets before resetting to the default baud rate
 uint32_t reset_baud_timeout_millis = 2500;
 
-
+// Pre throttle up clock rate
+uint32_t original_clock_rate = 0;
 
 // Packets ID
 enum PACKET_ID
@@ -46,7 +47,11 @@ struct PACKET_PING_ACK
     uint32_t boardrev;           // Board revision
     uint64_t boardserial;        // Board serial number
     uint32_t maxpacketsize;      // Maximum size of accepted packet
-    uint32_t rate;               // Currently selected baud rate
+    uint32_t clock_rate;
+    uint32_t measured_clock_rate;
+    uint32_t min_clock_rate;
+    uint32_t max_clock_rate;
+    uint32_t baudrate;           // Currently selected baud rate
 };
 
 // Error report packet
@@ -80,6 +85,7 @@ struct PACKET_REQUEST_BAUD
 {
     uint32_t baud;
     uint32_t reset_timeout_millis;
+    uint32_t throttleUp;
 };
 
 // Helper to send a single byte (correct signature for packet encoder callback)
@@ -111,7 +117,11 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             ack.boardrev = get_board_revision ();
             ack.boardserial = get_board_serial ();
             ack.maxpacketsize = sizeof(decoder_buf);
-            ack.rate = current_baud;
+            ack.clock_rate = get_current_clock_rate();
+            ack.measured_clock_rate = get_measured_clock_rate();
+            ack.min_clock_rate = get_min_clock_rate();
+            ack.max_clock_rate = get_max_clock_rate();
+            ack.baudrate = current_baud;
             sendPacket(seq, PACKET_ID_ACK, &ack, sizeof(ack));
             break;
         }
@@ -128,10 +138,7 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             memcpy((void*)(size_t)pData->address, pData->data, cbData - sizeof(struct PACKET_DATA));
 
             // Send ack
-            struct PACKET_PING_ACK ack;
-            ack.version = 1;
-            ack.rate = current_baud;
-            sendPacket(seq, PACKET_ID_ACK, &ack, sizeof(ack));
+            sendPacket(seq, PACKET_ID_ACK, NULL, 0);
 
             set_activity_led(0);
 
@@ -145,6 +152,14 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
 
             // Send ack
             sendPacket(seq, PACKET_ID_ACK, NULL, 0);
+
+            // Restore clock rate
+            if (original_clock_rate != 0)
+            {
+                set_clock_rate(original_clock_rate);
+                original_clock_rate = 0;
+            }
+
 
             // Flush
             uart_flush();
@@ -176,6 +191,14 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
 
             // Store reset
             reset_baud_timeout_millis = pBaud->reset_timeout_millis;
+
+            // Throttle up
+            if (pBaud->baud > 1000000 && pBaud->throttleUp)
+            {
+                if (original_clock_rate == 0)
+                    original_clock_rate = get_current_clock_rate();
+                set_clock_rate(get_max_clock_rate());
+            }
 
             // Send ack
             sendPacket(seq, PACKET_ID_ACK, NULL, 0);
@@ -239,6 +262,13 @@ int notmain ( void )
         {
             current_baud = default_baud;
             uart_init(current_baud);
+
+            // throttle down
+            if (original_clock_rate != 0)
+            {
+                set_clock_rate(original_clock_rate);
+                original_clock_rate = 0;
+            }
         }
 
         // When in default baud mode and it's been more than half a second since

@@ -13,8 +13,12 @@
             ],
             "type": "node",
             "args": [
-                "--go",
-                "--bootloader:z:\\",
+                "COM3",
+                "blink/kernel7l.hex",
+                "--flashbaud:1500000",
+                "--reboot:ccw_tada",
+                "--resetBaudTimeout:5000",
+                "--stress:30"
             ],
             "console": "integratedTerminal"
         }

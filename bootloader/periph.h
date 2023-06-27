@@ -42,6 +42,12 @@ void set_gpio_pull_mode(unsigned pin, int mode);
 int led_pin_from_revision(unsigned revision);
 void set_activity_led(unsigned on);
 
+unsigned get_min_clock_rate();
+unsigned get_max_clock_rate();
+unsigned get_current_clock_rate();
+unsigned get_measured_clock_rate();
+void set_clock_rate(uint32_t value);
+
 //-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
 

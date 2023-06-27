@@ -33,10 +33,10 @@ function showHelp()
     console.log(`--goDelay:<ms>          Sets a delay period for the go command`);
     console.log("--packetSize:<N>        Size of data chunks transmitted (default=4096)");
     console.log("--packetTimeout:<N>     Time out to receive packet ack in millis (default=300ms)");
-    console.log("--pingAttmempts:<T>     How many times to ping for device before giving up (default=10)");
+    console.log("--pingAttmempts:<T>     How many times to ping for device before giving up (default=20)");
     console.log("--serialLog:<file>      File to write low level log of serial comms");
     console.log("--resetBaudTimeout:<N>  How long device should wait for packet before resetting");
-    console.log("                        to the default baud (default=2500ms)");
+    console.log("                        to the default baud (default=500ms)");
     console.log("--bootloader[:<dir>]    Save the bootloader kernel images to directory <dir>");
     console.log("                        or the current directory if <dir> not specified.");
     console.log("--cwd:<dir>             Change current directory");
@@ -70,8 +70,8 @@ function parseCommandLine()
         goDelay: 0,
         packetSize: 4096,
         packetTimeout: 300,
-        pingAttempts: 10,
-        resetBaudTimeout: 2500,
+        pingAttempts: 20,
+        resetBaudTimeout: 500,
         serialLog: null,
         bootloader: null,
         stress: 1,

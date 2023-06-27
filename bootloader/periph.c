@@ -70,10 +70,38 @@
 #define PROPTAG_GET_BOARD_REVISION	0x00010002
 #define PROPTAG_GET_BOARD_SERIAL	0x00010004
 #define PROPTAG_GET_CLOCK_RATE	0x00030002
+#define PROPTAG_GET_MAX_CLOCK_RATE	0x00030004
+#define PROPTAG_GET_MIN_CLOCK_RATE	0x00030007
 #define PROPTAG_GET_CLOCK_RATE_MEASURED 0x00030047
+#define PROPTAG_SET_CLOCK_RATE		0x00038002
 #define PROPTAG_END		0x00000000
 
+#define CLOCK_ID_ARM        3
 #define CLOCK_ID_CORE		4
+
+#if 0
+// FROM: https://raspberrypi.stackexchange.com/a/135282
+// See also: https://jsandler18.github.io/extra/mailbox.html
+// See also: https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
+[
+uint32_t message_length,
+uint32_t message_type,
+/* tag buffer begin */
+    /* tag */
+    {
+    uint32_t tag;
+    // the amount of space you ACTUALLY have
+    uint32_t buffer_length; 
+    // set to zero. VC sets this to (1<<31) | <the length of the message it WANTED to send>
+    // note that this may be greater than `buffer_length`!!!
+    uint32_t response_length;
+    // your response data is placed here
+    uint32_t buffer[buffer_length / sizeof(uint32_t)]
+    }, /* repeat as many times as you like */
+/* tag buffer end */
+uint32_t end_of_message_marker
+]
+#endif
 
 unsigned get_core_clock (void);
 unsigned div (unsigned nDividend, unsigned nDivisor);
@@ -259,8 +287,8 @@ uint64_t get_board_serial (void)
 	    8*4,
 		CODE_REQUEST,
 		PROPTAG_GET_BOARD_SERIAL,
-		4*4,
-		0*4,
+		2*4,
+		0,
 		0,
         0,
 		PROPTAG_END
@@ -278,9 +306,11 @@ unsigned get_board_revision (void)
 		7*4,
 		CODE_REQUEST,
 		PROPTAG_GET_BOARD_REVISION,
-		3*4,
-		0*4,
+		1*4,
 		0,
+
+		0,
+
 		PROPTAG_END
 	};
 
@@ -288,6 +318,70 @@ unsigned get_board_revision (void)
 
     return proptag[5];
 }
+
+static unsigned get_clock_rate(unsigned tag)
+{
+	unsigned proptag[] __attribute__ ((aligned (16))) =
+	{
+		8*4,
+		CODE_REQUEST,
+		tag,
+		2*4,
+		0,
+
+		CLOCK_ID_ARM,
+		0,
+
+		PROPTAG_END
+	};
+
+	mbox_writeread ((unsigned) (unsigned long) &proptag);
+
+	return proptag[6];
+}
+
+unsigned get_min_clock_rate()
+{
+    return get_clock_rate(PROPTAG_GET_MIN_CLOCK_RATE);
+}
+
+unsigned get_max_clock_rate()
+{
+    return get_clock_rate(PROPTAG_GET_MAX_CLOCK_RATE);
+}
+
+unsigned get_current_clock_rate()
+{
+    return get_clock_rate(PROPTAG_GET_CLOCK_RATE);
+}
+
+unsigned get_measured_clock_rate()
+{
+    return get_clock_rate(PROPTAG_GET_CLOCK_RATE);
+}
+
+void set_clock_rate(uint32_t value)
+{
+	unsigned proptag[] __attribute__ ((aligned (16))) =
+	{
+		16*4,
+		CODE_REQUEST,
+		PROPTAG_SET_CLOCK_RATE,
+		3*4,
+		0,
+
+		CLOCK_ID_ARM,
+		value,
+        0, //SKIPSETTINGTURBO
+
+		PROPTAG_END,
+        0,0,0,0,0,0,0
+	};
+
+	mbox_writeread ((unsigned) (unsigned long) &proptag);
+    delay_micros(355); // See: linux/drivers/cpufreq/bcm2835-cpufreq.c
+}
+
 //-------------------------------------------------------------------------
 unsigned div (unsigned nDividend, unsigned nDivisor)
 {

@@ -108,7 +108,7 @@ On devices that have an activity indicator, the bootloader provides the followin
 
 When the indicator is off, this indicates either the bootloader isn't running, or is still in 
 in a non-default (ie: high) baud rate mode after a failed or cancelled flash operation.  Normally, 
-2.5 seconds after a failed flash the bootloader will revert to the default baud rate and the heart
+half a second after a failed flash the bootloader will revert to the default baud rate and the heart
 beat indicator will re-appear.
 
 
