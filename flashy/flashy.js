@@ -134,12 +134,13 @@ async function sendHexFile(layer, hexFile)
         child_process.spawnSync(
             "unzip", 
             [
-                path.join(path.dirname(__filename), "bootloader.zip")
+                path.join(path.dirname(__filename), "bootloader.zip"),
+                "-d",
+                cl.bootloader
             ],
             { 
                 stdio: 'inherit', 
                 shell: false,
-                cwd: cl.bootloader,
             }
         );
    }
@@ -187,7 +188,7 @@ async function sendHexFile(layer, hexFile)
             let ping = await layer.ping(true);
 
             // Send hex file
-            let startAddress = 0xFFFFFFFF;
+            let startAddress = cl.goAddress == null ? 0xFFFFFFFF : cl.goAddress;
             if (cl.hexFile)
             {
                 // Check the selected packet size is supported by the bootloader
@@ -212,7 +213,7 @@ async function sendHexFile(layer, hexFile)
             // Send go command
             if (cl.goSwitch || (cl.hexFile && !cl.nogoSwitch))
             {
-                await layer.sendGo(startAddress, 0);
+                await layer.sendGo(startAddress, cl.goDelay);
             }
         }
 

@@ -23,7 +23,8 @@ function showHelp()
     console.log(`--userBaud:<N>          Baud rate for monitor and reboot magic (default=115200)`);
     console.log(`--reboot:<magic>        Sends a magic reboot string at user baud before flashing`);
     console.log(`--noGo                  Don't send the go command after flashing`);
-    console.log(`--go                    Send the go command, even if not flashing`);
+    console.log(`--go[:<addr>]           Send the go command, even if not flashing, using address if specified`);
+    console.log(`                        If address not specified, uses start address from .hex file`);
     console.log(`--goDelay:<ms>          Sets a delay period for the go command`);
     console.log("--packetSize:<N>        Size of data chunks transmitted (default=4096)");
     console.log("--packetTimeout:<N>     Time out to receive packet ack in millis (default=300ms)");
@@ -57,6 +58,7 @@ function parseCommandLine()
         flashBaud: 1000000,
         userBaud: 115200,
         goSwitch: false,
+        goAddress: null,
         nogoSwitch: false,
         rebootMagic: null,
         monitor: false,
@@ -75,9 +77,19 @@ function parseCommandLine()
         let arg = process.argv[i];
         if (arg.startsWith(`--`))
         {
-            let parts = arg.substr(2).split(':');
-            let sw = parts[0];
-            let value = parts[1];
+            let colonPos = arg.indexOf(':');
+            let sw, value;
+            if (colonPos >= 0)
+            {
+                sw = arg.substring(2, colonPos);
+                value = arg.substring(colonPos+1);
+            }
+            else
+            {
+                sw = arg.substring(2);
+                value = "";
+            }
+
             switch (sw.toLowerCase())
             {
                 case `flashbaud`:
@@ -94,6 +106,8 @@ function parseCommandLine()
 
                 case `go`:
                     cl.goSwitch = true;
+                    if (value)
+                        cl.goAddress = Number(value);
                     break;
 
                 case `godelay`:

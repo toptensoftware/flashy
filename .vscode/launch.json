@@ -13,8 +13,8 @@
             ],
             "type": "node",
             "args": [
-                "/dev/ttyS3",
-                "../ccw/sample/01-blink/bin/debug/kernel.hex"
+                "--go",
+                "--bootloader:z:",
             ],
             "console": "integratedTerminal"
         }
