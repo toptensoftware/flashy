@@ -56,13 +56,17 @@ async function sendHexFile(layer, hexFile)
 
                 // Write the full 32-bit address to the header area
                 record.data.writeUInt32LE(record.addr + segment, 0);
-
-                // Update program byte length
-                programBytesSent += record.data.length - 4;
-
+                
                 // Send it
-                await layer.sendData(record.data);
-                process.stdout.write('.');
+                for (let i=0; i<cl.stress; i++)
+                {
+                    // Update program byte length
+                    programBytesSent += record.data.length - 4;
+
+                    // Send it
+                    await layer.sendData(record.data);
+                    process.stdout.write('.');
+                }
                 break;
 
             case '01':

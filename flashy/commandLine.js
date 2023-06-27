@@ -35,6 +35,7 @@ function showHelp()
     console.log("                        or the current directory if <dir> not specified.  Requires");
     console.log("                        `unzip` executable installed on path");
     console.log("--cwd:<dir>             Change current directory");
+    console.log("--stress:<N>            Send data packets N times (for load testing)");
     console.log(`--monitor               Monitor serial port`);
     console.log(`--help                  Show this help`);
 }
@@ -66,6 +67,7 @@ function parseCommandLine()
         resetBaudTimeout: 2500,
         serialLog: null,
         bootloader: null,
+        stress: 1,
     };
 
     for (let i=2; i<process.argv.length; i++)
@@ -141,6 +143,10 @@ function parseCommandLine()
                 case "showargs":
                     console.log(process.argv);
                     break;
+
+                case "stress":
+                    cl.stress = Number(value);
+                    break;  
 
                 default:
                     fail(`Unknown switch --${sw}`);
