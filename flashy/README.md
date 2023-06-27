@@ -78,10 +78,10 @@ to be installed on the target device's SD card.
 Pre-compiled kernel images are included and can be extracted with the
 `--bootloader` option.  
 
-eg: To place a copy of the kernel images in the current directory just run:
+eg: To place a copy of the kernel images in the root of drive D:
 
 ```
-flashy --bootloader:.
+flashy --bootloader:D:\
 ```
 
 
@@ -102,10 +102,14 @@ Run `flashy --help` for more details, or see below.
 
 On devices that have an activity indicator, the bootloader provides the following feedback:
 
-* When idle, ready to receive and the default baud rate is active, the led flashes in a heartbeat
-  pattern (2 flashes in quick succession every 1 second).
-* When receiving data, the activity LED toggles on receipt of every packet.
-* Otherwise the LED is off.
+* When idle and ready the led flashes in a heartbeat pattern (2 flashes in quick succession every 1 second).
+* When receiving data, the activity LED toggles on receipt of every packet (ie: it flashes rapidly)
+* Otherwise the LED is off.  
+
+When the indicator is off, this indicates either the bootloader isn't running, or is still in 
+in a non-default (ie: high) baud rate mode after a failed or cancelled flash operation.  Normally, 
+2.5 seconds after a failed flash the bootloader will revert to the default baud rate and the heart
+beat indicator will re-appear.
 
 
 

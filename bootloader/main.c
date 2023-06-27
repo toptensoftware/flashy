@@ -97,9 +97,6 @@ void sendPacket(uint32_t seq, uint32_t id, const void* pData, uint32_t cbData)
 // Receive a packet from the host
 void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
 {
-    // Flash activity led
-    set_activity_led(seq & 1);
-
     // Store packet time
     last_received_packet_time = timer_tick();
 
@@ -121,23 +118,22 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
 
         case PACKET_ID_DATA:
         {
+            // Flash activity led
+            set_activity_led(1);
+
             // Cast packet
             struct PACKET_DATA* pData = (struct PACKET_DATA*)p;
 
             // Copy packet data to memory
-            /*
-            memcpy((void*)pData->address, pData->data, cbData - sizeof(struct PACKET_DATA));
-            */
-            for (uint32_t i = 0; i<cbData - sizeof(struct PACKET_DATA); i++)
-            {
-                PUT8(pData->address + i, pData->data[i]);
-            }
+            memcpy((void*)(size_t)pData->address, pData->data, cbData - sizeof(struct PACKET_DATA));
 
             // Send ack
             struct PACKET_PING_ACK ack;
             ack.version = 1;
             ack.rate = current_baud;
             sendPacket(seq, PACKET_ID_ACK, &ack, sizeof(ack));
+
+            set_activity_led(0);
 
             break;
         }
@@ -245,11 +241,10 @@ int notmain ( void )
             uart_init(current_baud);
         }
 
-        // When in default baud mode and it's been more than a second since
+        // When in default baud mode and it's been more than half a second since
         // received a packet, flash the alive heart beat
         if (current_baud == default_baud && tick - last_received_packet_time > 500000)
         {
-            // Flash LED 2 times every half second
             unsigned insec = (tick / 1000) % 1000;
             set_activity_led(insec < 500 ? ((insec / 125) & 1) : 0);
         }

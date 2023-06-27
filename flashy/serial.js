@@ -163,6 +163,10 @@ function serialPort(serialPortName, options)
         {
             // Flush and close
             await close();
+
+            // Sometimes opening serial port immediately after closing gives
+            // access denied error on Windows.  Small delay to try to alleviate that.
+            await new Promise((resolve) => setTimeout(resolve, 20));
     
             // Switch and re-open
             serialPortOptions.baudRate = baud;
