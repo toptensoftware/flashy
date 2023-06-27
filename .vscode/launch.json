@@ -14,7 +14,7 @@
             "type": "node",
             "args": [
                 "--go",
-                "--bootloader:z:",
+                "--bootloader:z:\\",
             ],
             "console": "integratedTerminal"
         }

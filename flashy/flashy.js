@@ -8,6 +8,8 @@
 let os = require('os');
 let child_process = require('child_process');
 let path = require('path');
+let fs = require('fs');
+let unzipper = require('unzipper');
 
 let serial = require('./serial');
 let packetLayer = require('./packetLayer');
@@ -131,18 +133,15 @@ async function sendHexFile(layer, hexFile)
     // Extract bootloader images
     if (cl.bootloader)
     {
-        child_process.spawnSync(
-            "unzip", 
-            [
-                path.join(path.dirname(__filename), "bootloader.zip"),
-                "-d",
-                cl.bootloader
-            ],
-            { 
-                stdio: 'inherit', 
-                shell: false,
-            }
-        );
+        await fs.createReadStream(path.join(path.dirname(__filename), "bootloader.zip"))
+            .pipe(unzipper.Parse())
+            .on('entry', entry => { 
+                let target = path.join(cl.bootloader, entry.path);
+                console.log(`Extracting ${target}`);
+                entry.pipe(fs.createWriteStream(target));
+            })
+            .promise()
+            .then( () => console.log('done'), e => console.log('error',e));
    }
 
    // Quit if nothing else to do

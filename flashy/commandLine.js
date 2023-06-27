@@ -4,16 +4,21 @@
 let fs = require('fs');
 let path = require('path');
 
-// Help!
-function showHelp()
+function showVersion()
 {
     let pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')), "utf8");
-
     console.log(`Flashy ${pkg.version}`)
     console.log(`All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal`);
     console.log();
     console.log(`Copyright (C) 2023 Topten Software`);
     console.log(`Portions of bootloader Copyright (c) 2012 David Welch dwelch@dwelch.com`);
+}
+
+// Help!
+function showHelp()
+{
+    showVersion();
+
     console.log();
     console.log(`Usage: flashy <serialport> [<hexfile>] [options]`);
     console.log();
@@ -33,12 +38,12 @@ function showHelp()
     console.log("--resetBaudTimeout:<N>  How long device should wait for packet before resetting");
     console.log("                        to the default baud (default=2500ms)");
     console.log("--bootloader[:<dir>]    Save the bootloader kernel images to directory <dir>");
-    console.log("                        or the current directory if <dir> not specified.  Requires");
-    console.log("                        `unzip` executable installed on path");
+    console.log("                        or the current directory if <dir> not specified.");
     console.log("--cwd:<dir>             Change current directory");
     console.log("--stress:<N>            Send data packets N times (for load testing)");
     console.log(`--monitor               Monitor serial port`);
     console.log(`--help                  Show this help`);
+    console.log(`--version               Show version info`);
 }
 
 // Abort with message
@@ -100,6 +105,10 @@ function parseCommandLine()
                     showHelp();
                     process.exit(0);
 
+                case `version`:
+                    showVersion();
+                    process.exit(0);
+        
                 case `nogo`:
                     cl.nogoSwitch = true;
                     break;
