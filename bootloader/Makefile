@@ -1,9 +1,9 @@
 
 ifeq ($(OS),Windows_NT)
-ARMTOOLS = Z:/armtools/
+ARMTOOLS ?= Z:/armtools/
 ARMTOOLS_PLATFORM=mingw-w64-i686
 else
-ARMTOOLS = ~/armtools/
+ARMTOOLS ?= ~/armtools/
 ARMTOOLS_PLATFORM=x86_64
 endif
 
