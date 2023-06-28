@@ -13,8 +13,7 @@
             ],
             "type": "node",
             "args": [
-                "COM3",
-                "blink/kernel7.hex",
+                "--bootloader:F:\\"
             ],
             "console": "integratedTerminal"
         }
