@@ -13,14 +13,18 @@ REM     echo No removeable drive found, aborting!
 REM     goto EXIT
 REM )
 
+make aarch CONFIG=release
+
 SET USBDRIVE=F:
 
 echo Copying to %USBDRIVE%\
 
-xcopy kernel.img %USBDRIVE%\ /Q /Y > nul
-xcopy kernel7.img %USBDRIVE%\ /Q /Y > nul
-REM xcopy config.txt %USBDRIVE%\ /Q /Y > nul
-REM xcopy cmdline.txt %USBDRIVE%\ /Q /Y > nul
+pushd .\bin\release
+for /r %%a in (*.img) do (
+    echo "%%a" "%USBDRIVE%\%%~nxa"
+    copy "%%a" "%USBDRIVE%\%%~nxa"
+)
+popd
 
 removedrive %USBDRIVE%\ -L -na
 

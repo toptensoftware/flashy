@@ -14,11 +14,11 @@
             "type": "node",
             "args": [
                 "COM3",
-                "blink/kernel7l.hex",
-                "--flashbaud:1500000",
+                "blink/kernel7.hex",
                 "--reboot:ccw_tada",
-                "--resetBaudTimeout:5000",
-                "--stress:30"
+                "--flashBaud:2000000",
+                "--nogo",
+                "--stress:10"
             ],
             "console": "integratedTerminal"
         }

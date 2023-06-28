@@ -1,7 +1,7 @@
 
 #include <stdbool.h>
 #include <string.h>
-#include "periph.h"
+#include "raspi.h"
 #include "packenc.h"
 #include "crc32.h"
 
@@ -25,7 +25,7 @@ unsigned last_received_packet_time = 0;
 uint32_t reset_baud_timeout_millis = 2500;
 
 // Pre throttle up clock rate
-uint32_t original_clock_rate = 0;
+uint32_t original_cpu_freq = 0;
 
 // Packets ID
 enum PACKET_ID
@@ -47,10 +47,10 @@ struct PACKET_PING_ACK
     uint32_t boardrev;           // Board revision
     uint64_t boardserial;        // Board serial number
     uint32_t maxpacketsize;      // Maximum size of accepted packet
-    uint32_t clock_rate;
-    uint32_t measured_clock_rate;
-    uint32_t min_clock_rate;
-    uint32_t max_clock_rate;
+    uint32_t cpu_freq;
+    uint32_t measured_cpu_freq;
+    uint32_t min_cpu_freq;
+    uint32_t max_cpu_freq;
     uint32_t baudrate;           // Currently selected baud rate
 };
 
@@ -88,23 +88,47 @@ struct PACKET_REQUEST_BAUD
     uint32_t throttleUp;
 };
 
+#if 0
+
+#define serial_init mini_uart_init
+#define serial_try_recv mini_uart_try_recv
+#define serial_send mini_uart_send
+#define serial_flush mini_uart_flush
+
+#elif 0
+
+#define serial_init(unused) ((void)0)
+#define serial_try_recv() (-1)
+#define serial_send(byte) ((void)0)
+#define serial_flush() ((void)0)
+
+#else
+
+#define serial_init uart_init
+#define serial_try_recv uart_try_recv
+#define serial_send uart_send
+#define serial_flush uart_flush
+
+#endif
+
+
 // Helper to send a single byte (correct signature for packet encoder callback)
-void uart_send_byte(uint8_t byte)
+void send_byte(uint8_t byte)
 {
-    uart_send(byte);
+    serial_send(byte);
 }
 
 // Send a packet to the host
 void sendPacket(uint32_t seq, uint32_t id, const void* pData, uint32_t cbData)
 {
-    packet_encode(uart_send_byte, seq, id, pData, cbData);
+    packet_encode(send_byte, seq, id, pData, cbData);
 }
 
 // Receive a packet from the host
 void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
 {
     // Store packet time
-    last_received_packet_time = timer_tick();
+    last_received_packet_time = micros();
 
     // Dispatch by id
     switch (id)
@@ -117,10 +141,10 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             ack.boardrev = get_board_revision ();
             ack.boardserial = get_board_serial ();
             ack.maxpacketsize = sizeof(decoder_buf);
-            ack.clock_rate = get_current_clock_rate();
-            ack.measured_clock_rate = get_measured_clock_rate();
-            ack.min_clock_rate = get_min_clock_rate();
-            ack.max_clock_rate = get_max_clock_rate();
+            ack.cpu_freq = get_cpu_freq();
+            ack.measured_cpu_freq = get_measured_cpu_freq();
+            ack.min_cpu_freq = get_min_cpu_freq();
+            ack.max_cpu_freq = get_max_cpu_freq();
             ack.baudrate = current_baud;
             sendPacket(seq, PACKET_ID_ACK, &ack, sizeof(ack));
             break;
@@ -154,15 +178,15 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             sendPacket(seq, PACKET_ID_ACK, NULL, 0);
 
             // Restore clock rate
-            if (original_clock_rate != 0)
+            if (original_cpu_freq != 0)
             {
-                set_clock_rate(original_clock_rate);
-                original_clock_rate = 0;
+                set_cpu_freq(original_cpu_freq);
+                original_cpu_freq = 0;
             }
 
 
             // Flush
-            uart_flush();
+            serial_flush();
             delay_micros(10000);
 
             // User delay before starting?
@@ -195,9 +219,9 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             // Throttle up
             if (pBaud->baud > 1000000 && pBaud->throttleUp)
             {
-                if (original_clock_rate == 0)
-                    original_clock_rate = get_current_clock_rate();
-                set_clock_rate(get_max_clock_rate());
+                if (original_cpu_freq == 0)
+                    original_cpu_freq = get_cpu_freq();
+                set_cpu_freq(get_max_cpu_freq());
             }
 
             // Send ack
@@ -206,10 +230,10 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             if (pBaud->baud != current_baud)
             {
                 // Switch baud rate
-                uart_flush();
+                serial_flush();
                 delay_micros(10000);
                 current_baud = pBaud->baud;
-                uart_init(current_baud);
+                serial_init(current_baud);
             }
 
             break;
@@ -227,12 +251,15 @@ void onPacketError(int code)
 }
 
 // Main
-int notmain ( void )
+int main()
 {
-    // Zero bss section
-    extern unsigned char __bss_start;
-	extern unsigned char __bss_end;
-	memset(&__bss_start, 0, &__bss_end - &__bss_start);
+    // Boost
+    set_cpu_freq(get_max_cpu_freq());
+    delay_micros(400);
+
+    // Initialize hardware
+    serial_init(current_baud);
+    timer_init();
 
     // Setup packet decoder
     struct decode_context ctx = {0};
@@ -241,19 +268,15 @@ int notmain ( void )
     ctx.pBuf = decoder_buf;
     ctx.cbBuf = sizeof(decoder_buf);
 
-    // Initialize hardware
-    uart_init(current_baud);
-    timer_init();
-
     // Main loop
     while (true)
     {
         // Read serial bytes into fifo
         int recv_byte;
-        while ((recv_byte = uart_try_recv()) >= 0)
+        while ((recv_byte = serial_try_recv()) >= 0)
             packet_decode(&ctx, recv_byte);
 
-        unsigned tick = timer_tick();
+        unsigned tick = micros();
 
         // If no packets received at non-standard baud rate, then switch
         // back to the default
@@ -261,13 +284,13 @@ int notmain ( void )
             tick - last_received_packet_time > (reset_baud_timeout_millis * 1000))
         {
             current_baud = default_baud;
-            uart_init(current_baud);
+            serial_init(current_baud);
 
             // throttle down
-            if (original_clock_rate != 0)
+            if (original_cpu_freq != 0)
             {
-                set_clock_rate(original_clock_rate);
-                original_clock_rate = 0;
+                set_cpu_freq(original_cpu_freq);
+                original_cpu_freq = 0;
             }
         }
 
