@@ -6,19 +6,20 @@ All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal.
 
 ## Features
 
-* Binary mode transfers (faster than sending .hex file as text)
-* Strong packet encoding with crc32 and all packets acknowledged by device for rebustness
-* Stateless device side bootloader for reliable recovery and restart
-* Dynamic baud-rate switching (saves updating kernel image on device to switch baud rate)
-* Automatic idle time baud rate reset (for recovery)    
-* Configurable packet size and timeout for flexibility with different devices
-* Host side .hex file parsing and re-chunking for packet size balancing and simpler
+* **New V2** Strong packet encoding with crc32 and all packets acknowledged by device for rebustness
+* **New V2** Stateless device side bootloader for reliable recovery and restart
+* **New V2** Dynamic baud-rate switching (saves updating kernel image on device to switch baud rate)
+* **New V2** Ability to boost device CPU frequency during high baud uploads
+* **New V2** Automatic idle time baud rate and CPU frequency reset (for recovery)    
+* **New V2** Activity indicator shows ready status feedback
+* **New V2** Configurable packet size and timeout for flexibility with different devices
+* **New V2** Host side .hex file parsing and re-chunking for packet size balancing and simpler
   device side implementation
+* **New V2** Includes packaged pre-compiled bootloader images
+* Binary mode transfers (faster than sending .hex file as text)
 * Supports sending magic reboot strings
 * Supports serial port monitoring after flashing
 * Delayed image starts (by timeout, or by command)
-* Includes packaged pre-compiled bootloader images
-* Activity indicator shows ready status feedback
 
 
 
@@ -86,7 +87,7 @@ flashy --bootloader:D:\
 
 
 
-## Manually Running Flashy
+## Manually Uploads
 
 A typical command line to reboot the device, flash an image and start monitoring looks like this:
 
@@ -95,6 +96,20 @@ flashy kernel7.hex /dev/ttyS3 --flashBaud:2000000 --reboot:yourmagicstring --mon
 ```
 
 Run `flashy --help` for more details, or see below.
+
+
+
+## CPU Boost
+
+At high upload rates (> 1M baud) the device's CPU frequency is boosted to the maximum rate
+for the period of the upload.  This helps the device keep up with the data rate and often
+prevents a failed upload.
+
+CPU boost can be overridden with the `--cpuBoost` command line option:
+
+* `--cpuBoost:no` - disable CPU boost even for > 1M baud uploads
+* `--cpuBoost:yes` - boost CPU even for < 1M baud uploads
+* `--cpuBoost:auto` - the default boost of > 1M baud upload.
 
 
 
@@ -110,6 +125,33 @@ When the indicator is off, this indicates either the bootloader isn't running, o
 in a non-default (ie: high) baud rate mode after a failed or cancelled flash operation.  Normally, 
 half a second after a failed flash the bootloader will revert to the default baud rate and the heart
 beat indicator will re-appear.
+
+
+
+## Idle Time Reset
+
+If the bootloader detects an idle time period while in non-default baud rate, or when the CPU frequency
+has been boosted (typically after a failed boot) it will automatically reset itself to the default
+baud rate and original CPU frequency.
+
+This puts the boot loader back in its original state, ready for a new upload attempt.  This ready
+state is indicated by the heartbeat signal on the activity LED.
+
+The idle time period can be tweaked with the `--resetBaudTimeout` command line option.
+
+
+## Delayed Starts
+
+Sometimes you'll need time between uploading a program image and the program starting.  There are
+two ways to do this:
+
+1. Use `--goDelay:NNN` where NNN is a number of milliseconds the bootloaded will stall for after
+   the upload, but before starting the program
+2. Use `--noGo` - this will cause the bootloader to accept the uploaded program but doesn't start it.
+   To later manually start the program, use the `--go` option.
+
+The `--goDelay` is particularly handy for giving time to start a serial monitor program so he start 
+of the program's debug log isn't missed.
 
 
 
@@ -141,7 +183,7 @@ find itself in Windows and relaunch itself automatically.
 ## Command Line Options
 
 ```
-Flashy 2.0.4
+Flashy 2.0.7
 All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal
 
 Copyright (C) 2023 Topten Software
@@ -149,26 +191,30 @@ Portions of bootloader Copyright (c) 2012 David Welch dwelch@dwelch.com
 
 Usage: flashy <serialport> [<hexfile>] [options]
 
-<serialport>            Serial port to write to
-<hexfile>               The .hex file to write (optional)
---flashBaud:<N>         Baud rate for flashing (default=1000000)
---userBaud:<N>          Baud rate for monitor and reboot magic (default=115200)
---reboot:<magic>        Sends a magic reboot string at user baud before flashing
---noGo                  Don't send the go command after flashing
---go                    Send the go command, even if not flashing
---goDelay:<ms>          Sets a delay period for the go command
---packetSize:<N>        Size of data chunks transmitted (default=4096)
---packetTimeout:<N>     Time out to receive packet ack in millis (default=300ms)
---pingAttmempts:<T>     How many times to ping for device before giving up (default=10)
---serialLog:<file>      File to write low level log of serial comms
---resetBaudTimeout:<N>  How long device should wait for packet before resetting
-                        to the default baud (default=2500ms)
---bootloader[:<dir>]    Save the bootloader kernel images to directory <dir>
-                        or the current directory if <dir> not specified.  Requires
-                        `unzip` executable installed on path
---cwd:<dir>             Change current directory
---monitor               Monitor serial port
---help                  Show this help
+<serialport>               Serial port to write to
+<hexfile>                  The .hex file to write (optional)
+--flashBaud:<N>            Baud rate for flashing (default=1000000)
+--userBaud:<N>             Baud rate for monitor and reboot magic (default=115200)
+--reboot:<magic>           Sends a magic reboot string at user baud before flashing
+--noGo                     Don't send the go command after flashing
+--go[:<addr>]              Send the go command, even if not flashing, using address if specified
+                           If address not specified, uses start address from .hex file
+--goDelay:<ms>             Sets a delay period for the go command
+--packetSize:<N>           Size of data chunks transmitted (default=4096)
+--packetTimeout:<N>        Time out to receive packet ack in millis (default=300ms)
+--pingAttmempts:<T>        How many times to ping for device before giving up (default=20)
+--serialLog:<file>         File to write low level log of serial comms
+--resetBaudTimeout:<N>     How long device should wait for packet before resetting
+                           to the default baud and CPU frequent boost(default=500ms)
+--cpuBoost:<yes|no|auto>   whether to boost CPU clock frequency during uploads
+                              auto = yes if flash baud rate > 1M
+--bootloader[:<dir>]       Save the bootloader kernel images to directory <dir>
+                           or the current directory if <dir> not specified.
+--cwd:<dir>                Change current directory
+--stress:<N>               Send data packets N times (for load testing)
+--monitor                  Monitor serial port
+--help                     Show this help
+--version                  Show version info
 ```
 
 

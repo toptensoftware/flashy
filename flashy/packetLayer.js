@@ -175,20 +175,20 @@ function layer(port, options)
                     boardSerialHi: data.readUInt32LE(8),
                     boardserialLo: data.readUInt32LE(12),
                     maxPacketSize: data.readUInt32LE(16),
-                    clock_rate: data.readUInt32LE(20),
-                    measured_clock_rate: data.readUInt32LE(24),
-                    min_clock_rate: data.readUInt32LE(28),
-                    max_clock_rate: data.readUInt32LE(32),
+                    cpu_freq: data.readUInt32LE(20),
+                    measured_cpu_freq: data.readUInt32LE(24),
+                    min_cpu_freq: data.readUInt32LE(28),
+                    max_cpu_freq: data.readUInt32LE(32),
                     baud: data.readUInt32LE(36),
                 }
-                process.stdout.write("ok");
+                process.stdout.write(" ok\n");
 
                 if (showDeviceInfo)
                 {
-                    process.stdout.write(` (found device: ${piModel.piModelFromRevision(r.boardRevision).name}, serial: ${format_hex(r.boardSerialHi, 8)}-${format_hex(r.boardserialLo, 8)}, loader: v${r.version}, max packet: ${r.maxPacketSize})`);
+                    process.stdout.write(`Found device: ${piModel.piModelFromRevision(r.boardRevision).name}, serial: ${format_hex(r.boardSerialHi, 8)}-${format_hex(r.boardserialLo, 8)}, loader: v${r.version}, max packet: ${r.maxPacketSize}\n`);
                 }
-                process.stdout.write("\n");
-                process.stdout.write(`clock_rate: current: ${r.clock_rate/1000000}, measured:${r.measured_clock_rate/1000000}, min: ${r.min_clock_rate/1000000}, max: ${r.max_clock_rate/1000000}\n`);
+
+                //process.stdout.write(`cpu_freq: current: ${r.cpu_freq/1000000}, measured:${r.measured_cpu_freq/1000000}, min: ${r.min_cpu_freq/1000000}, max: ${r.max_cpu_freq/1000000}\n`);
                 return r;
             }
             catch (err)
@@ -202,16 +202,20 @@ function layer(port, options)
 
     // Sends a request to device to switch baud rate and on success
     // switches the baud rate on the underlying serial connection
-    async function switchBaud(baud, reset_timeout_millis, throttleUp)
+    async function switchBaud(baud, reset_timeout_millis, cpu_freq)
     {
-        process.stdout.write(`Sending baud request for ${baud}...`);
+        process.stdout.write(`Sending request for ${baud.toLocaleString()} baud`);
+        if (cpu_freq) 
+            process.stdout.write(` and ${(cpu_freq/1000000).toLocaleString()}MHz CPU...`);
+        else
+            process.stdout.write("...");
 
         let packet = Buffer.alloc(12);
         packet.writeUInt32LE(baud, 0);
         packet.writeUInt32LE(reset_timeout_millis, 4);
-        packet.writeUInt32LE(0, 8);
+        packet.writeUInt32LE(cpu_freq, 8);
         await send(port, PACKET_ID_REQUEST_BAUD, packet);
-        process.stdout.write("ok\n");
+        process.stdout.write(" ok\n");
     
         // Switch underlying serial transport
         await port.switchBaud(baud);
@@ -232,7 +236,7 @@ function layer(port, options)
         packet.writeUInt32LE(delayMillis, 4);
         await send(port, PACKET_ID_GO, packet);
 
-        process.stdout.write("ok\n");
+        process.stdout.write(" ok\n");
     }
 
     async function readMem(address, length)

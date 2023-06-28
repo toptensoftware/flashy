@@ -22,28 +22,30 @@ function showHelp()
     console.log();
     console.log(`Usage: flashy <serialport> [<hexfile>] [options]`);
     console.log();
-    console.log(`<serialport>            Serial port to write to`);
-    console.log(`<hexfile>               The .hex file to write (optional)`);
-    console.log(`--flashBaud:<N>         Baud rate for flashing (default=1000000)`);
-    console.log(`--userBaud:<N>          Baud rate for monitor and reboot magic (default=115200)`);
-    console.log(`--reboot:<magic>        Sends a magic reboot string at user baud before flashing`);
-    console.log(`--noGo                  Don't send the go command after flashing`);
-    console.log(`--go[:<addr>]           Send the go command, even if not flashing, using address if specified`);
-    console.log(`                        If address not specified, uses start address from .hex file`);
-    console.log(`--goDelay:<ms>          Sets a delay period for the go command`);
-    console.log("--packetSize:<N>        Size of data chunks transmitted (default=4096)");
-    console.log("--packetTimeout:<N>     Time out to receive packet ack in millis (default=300ms)");
-    console.log("--pingAttmempts:<T>     How many times to ping for device before giving up (default=20)");
-    console.log("--serialLog:<file>      File to write low level log of serial comms");
-    console.log("--resetBaudTimeout:<N>  How long device should wait for packet before resetting");
-    console.log("                        to the default baud (default=500ms)");
-    console.log("--bootloader[:<dir>]    Save the bootloader kernel images to directory <dir>");
-    console.log("                        or the current directory if <dir> not specified.");
-    console.log("--cwd:<dir>             Change current directory");
-    console.log("--stress:<N>            Send data packets N times (for load testing)");
-    console.log(`--monitor               Monitor serial port`);
-    console.log(`--help                  Show this help`);
-    console.log(`--version               Show version info`);
+    console.log(`<serialport>               Serial port to write to`);
+    console.log(`<hexfile>                  The .hex file to write (optional)`);
+    console.log(`--flashBaud:<N>            Baud rate for flashing (default=1000000)`);
+    console.log(`--userBaud:<N>             Baud rate for monitor and reboot magic (default=115200)`);
+    console.log(`--reboot:<magic>           Sends a magic reboot string at user baud before flashing`);
+    console.log(`--noGo                     Don't send the go command after flashing`);
+    console.log(`--go[:<addr>]              Send the go command, even if not flashing, using address if specified`);
+    console.log(`                           If address not specified, uses start address from .hex file`);
+    console.log(`--goDelay:<ms>             Sets a delay period for the go command`);
+    console.log("--packetSize:<N>           Size of data chunks transmitted (default=4096)");
+    console.log("--packetTimeout:<N>        Time out to receive packet ack in millis (default=300ms)");
+    console.log("--pingAttmempts:<T>        How many times to ping for device before giving up (default=20)");
+    console.log("--serialLog:<file>         File to write low level log of serial comms");
+    console.log("--resetBaudTimeout:<N>     How long device should wait for packet before resetting");
+    console.log("                           to the default baud and CPU frequent boost(default=500ms)");
+    console.log("--cpuBoost:<yes|no|auto>   whether to boost CPU clock frequency during uploads");
+    console.log("                              auto = yes if flash baud rate > 1M");
+    console.log("--bootloader[:<dir>]       Save the bootloader kernel images to directory <dir>");
+    console.log("                           or the current directory if <dir> not specified.");
+    console.log("--cwd:<dir>                Change current directory");
+    console.log("--stress:<N>               Send data packets N times (for load testing)");
+    console.log(`--monitor                  Monitor serial port`);
+    console.log(`--help                     Show this help`);
+    console.log(`--version                  Show version info`);
 }
 
 // Abort with message
@@ -72,6 +74,7 @@ function parseCommandLine()
         packetTimeout: 300,
         pingAttempts: 20,
         resetBaudTimeout: 500,
+        cpuBoost: "auto",
         serialLog: null,
         bootloader: null,
         stress: 1,
@@ -149,6 +152,12 @@ function parseCommandLine()
                             
                 case "resetbaudtimeout":
                     cl.resetBaudTimeout = Number(value);
+                    break;
+
+                case "cpuboost":
+                    if (value != 'auto' && value != 'yes' && value != 'no')
+                        fail("--cpuboost should be 'yes', 'no' or 'auto'");
+                    cl.cpuBoost = value;
                     break;
             
                 case "seriallog":

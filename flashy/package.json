@@ -1,6 +1,6 @@
 {
   "name": "@toptensoftware/flashy",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal",
   "main": "flashy.js",
   "dependencies": {

@@ -281,7 +281,7 @@ void set_cpu_freq(uint32_t value)
 	};
 
 	mbox_writeread((unsigned)(unsigned long) &proptag);
-    //delay_micros(355); // See: linux/drivers/cpufreq/bcm2835-cpufreq.c
+    delay_micros(355); // See: linux/drivers/cpufreq/bcm2835-cpufreq.c
 }
 
 unsigned get_min_cpu_freq()

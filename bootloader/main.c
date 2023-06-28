@@ -22,10 +22,12 @@ unsigned last_received_packet_time = 0;
 
 // How long to wait on non-default baud rate with no
 // received packets before resetting to the default baud rate
-uint32_t reset_baud_timeout_millis = 2500;
+uint32_t reset_timeout_millis = 2500;
 
 // Pre throttle up clock rate
 uint32_t original_cpu_freq = 0;
+uint32_t min_cpu_freq = 0;
+uint32_t max_cpu_freq = 0;
 
 // Packets ID
 enum PACKET_ID
@@ -85,7 +87,7 @@ struct PACKET_REQUEST_BAUD
 {
     uint32_t baud;
     uint32_t reset_timeout_millis;
-    uint32_t throttleUp;
+    uint32_t cpufreq;
 };
 
 #if 0
@@ -110,6 +112,16 @@ struct PACKET_REQUEST_BAUD
 #define serial_flush uart_flush
 
 #endif
+
+void restore_cpu_freq()
+{
+    if (original_cpu_freq != 0)
+    {
+        set_cpu_freq(original_cpu_freq);
+        original_cpu_freq = 0;
+    }
+}
+
 
 
 // Helper to send a single byte (correct signature for packet encoder callback)
@@ -143,8 +155,8 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             ack.maxpacketsize = sizeof(decoder_buf);
             ack.cpu_freq = get_cpu_freq();
             ack.measured_cpu_freq = get_measured_cpu_freq();
-            ack.min_cpu_freq = get_min_cpu_freq();
-            ack.max_cpu_freq = get_max_cpu_freq();
+            ack.min_cpu_freq = min_cpu_freq;
+            ack.max_cpu_freq = max_cpu_freq;
             ack.baudrate = current_baud;
             sendPacket(seq, PACKET_ID_ACK, &ack, sizeof(ack));
             break;
@@ -178,12 +190,7 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             sendPacket(seq, PACKET_ID_ACK, NULL, 0);
 
             // Restore clock rate
-            if (original_cpu_freq != 0)
-            {
-                set_cpu_freq(original_cpu_freq);
-                original_cpu_freq = 0;
-            }
-
+            restore_cpu_freq();
 
             // Flush
             serial_flush();
@@ -214,14 +221,23 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
             struct PACKET_REQUEST_BAUD* pBaud = (struct PACKET_REQUEST_BAUD*)p;
 
             // Store reset
-            reset_baud_timeout_millis = pBaud->reset_timeout_millis;
+            reset_timeout_millis = pBaud->reset_timeout_millis;
 
             // Throttle up
-            if (pBaud->baud > 1000000 && pBaud->throttleUp)
+            if (pBaud->cpufreq)
             {
+                // Clamp to limits
+                if (pBaud->cpufreq < min_cpu_freq)
+                    pBaud->cpufreq = min_cpu_freq;
+                if (pBaud->cpufreq > max_cpu_freq)
+                    pBaud->cpufreq = max_cpu_freq;
+
+                // Save original CPU freq
                 if (original_cpu_freq == 0)
                     original_cpu_freq = get_cpu_freq();
-                set_cpu_freq(get_max_cpu_freq());
+
+                // Set new freq
+                set_cpu_freq(pBaud->cpufreq);
             }
 
             // Send ack
@@ -253,9 +269,11 @@ void onPacketError(int code)
 // Main
 int main()
 {
+    min_cpu_freq = get_min_cpu_freq();
+    max_cpu_freq = get_max_cpu_freq();
+
     // Boost
-    set_cpu_freq(get_max_cpu_freq());
-    delay_micros(400);
+    //set_cpu_freq(get_max_cpu_freq());
 
     // Initialize hardware
     serial_init(current_baud);
@@ -278,28 +296,31 @@ int main()
 
         unsigned tick = micros();
 
-        // If no packets received at non-standard baud rate, then switch
-        // back to the default
-        if (current_baud != default_baud && reset_baud_timeout_millis != 0 && 
-            tick - last_received_packet_time > (reset_baud_timeout_millis * 1000))
+        // If no packets received for reset timeout period, then reset
+        if (reset_timeout_millis != 0 && 
+            tick - last_received_packet_time > (reset_timeout_millis * 1000))
         {
-            current_baud = default_baud;
-            serial_init(current_baud);
-
-            // throttle down
-            if (original_cpu_freq != 0)
+            // Reset baud rate
+            if (current_baud != default_baud)
             {
-                set_cpu_freq(original_cpu_freq);
-                original_cpu_freq = 0;
+                current_baud = default_baud;
+                serial_init(current_baud);
             }
+            
+            // Reset CPU freq
+            restore_cpu_freq();
         }
+
 
         // When in default baud mode and it's been more than half a second since
         // received a packet, flash the alive heart beat
         if (current_baud == default_baud && tick - last_received_packet_time > 500000)
         {
             unsigned insec = (tick / 1000) % 1000;
-            set_activity_led(insec < 500 ? ((insec / 125) & 1) : 0);
+            if (insec < 500)
+                set_activity_led(0);
+            else
+                set_activity_led((insec / 125) & 1);
         }
     }
 }

@@ -86,7 +86,7 @@ function serialPort(serialPortName, options)
         }
 
         // Open it
-        log && log(`Opening ${serialPortName} at ${serialPortOptions.baudRate}...`)
+        log && log(`Opening ${serialPortName} at ${serialPortOptions.baudRate.toLocaleString()} baud...`)
         logfile(`Opening ${serialPortName} at ${serialPortOptions.baudRate}...`)
         port = new SerialPort(serialPortName, serialPortOptions, function(err) {
             if (err)
@@ -94,7 +94,7 @@ function serialPort(serialPortName, options)
                 throw new Error(`Failed to open serial port: ${err.message}`);
             }
         });
-        log && log(`ok\n`);
+        log && log(` ok\n`);
 
         // Listen for data
         port.on('data', function(data) {
@@ -144,7 +144,7 @@ function serialPort(serialPortName, options)
 
             port = null;
     
-            log && log(`ok\n`);
+            log && log(` ok\n`);
         }
     }
 

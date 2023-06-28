@@ -166,7 +166,7 @@ async function sendHexFile(layer, hexFile)
             await port.switchBaud(cl.userBaud);
             process.stdout.write(`Sending reboot magic '${cl.rebootMagic}'...`)
             await port.write(cl.rebootMagic);
-            process.stdout.write(`ok\n`);
+            process.stdout.write(` ok\n`);
         }
 
         // Open?
@@ -198,10 +198,14 @@ async function sendHexFile(layer, hexFile)
                     process.exit(7);
                 }
     
-                // Switch baud rate while sending file
-                if (cl.flashBaud != 115200)
+                
+                // Switch baud rate and cpu frequency while sending file
+                let cpufreq = 0;
+                if ((cl.cpuBoost == "auto" && cl.flashBaud > 1000000) || cl.cpuBoost == 'yes')
+                    cpufreq = ping.max_cpu_freq;
+                if (cl.flashBaud != 115200 || cpufreq != 0)
                 {
-                    await layer.switchBaud(cl.flashBaud, cl.resetBaudTimeout);
+                    await layer.switchBaud(cl.flashBaud, cl.resetBaudTimeout, cpufreq);
                     await layer.ping();
                 }
             

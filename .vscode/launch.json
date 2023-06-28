@@ -16,9 +16,9 @@
                 "COM3",
                 "blink/kernel7.hex",
                 "--reboot:ccw_tada",
-                "--flashBaud:2000000",
+                "--flashBaud:115200",
+                "--cpuBoost:auto",
                 "--nogo",
-                "--stress:10"
             ],
             "console": "integratedTerminal"
         }
