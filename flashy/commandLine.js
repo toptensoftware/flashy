@@ -11,7 +11,11 @@ function showVersion()
     console.log(`All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal`);
     console.log();
     console.log(`Copyright (C) 2023 Topten Software`);
-    console.log(`Portions of bootloader Copyright (c) 2012 David Welch dwelch@dwelch.com`);
+    console.log(`    https://www.toptensoftware.com`)
+    console.log(`Portions based on code from the Circle project: `);
+    console.log(`    https://github.com/rsta2/circle`);
+    console.log(`Portions based on code from David Welch's bootloader project:`);
+    console.log(`    https://github.com/dwelch67/raspberrypi`);
 }
 
 // Help!

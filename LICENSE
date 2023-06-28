@@ -1,7 +1,10 @@
 Copyright 2023 Topten Software
+    https://ww.toptensoftware.com
+Portions based on code from the Circle project: 
+    https://github.com/rsta2/circle
+Portions based on code from David Welch's bootloader project:
+    https://github.com/dwelch67/raspberrypi
 
-Portions of bootloader Copyright (c) 2012 David Welch dwelch@dwelch.com
-(see bottom of periph.h)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

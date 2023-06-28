@@ -183,12 +183,6 @@ find itself in Windows and relaunch itself automatically.
 ## Command Line Options
 
 ```
-Flashy 2.0.7
-All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal
-
-Copyright (C) 2023 Topten Software
-Portions of bootloader Copyright (c) 2012 David Welch dwelch@dwelch.com
-
 Usage: flashy <serialport> [<hexfile>] [options]
 
 <serialport>               Serial port to write to

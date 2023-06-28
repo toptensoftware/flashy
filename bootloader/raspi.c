@@ -1,5 +1,7 @@
-// Heavily modified version of periph.c from David Welch's bootloader project
-// Also based on code from Circle: https://github.com/rsta2/circle
+// Portions based on code from the Circle project: 
+//     https://github.com/rsta2/circle
+// Portions based on code from David Welch's bootloader project:
+//     https://github.com/dwelch67/raspberrypi
 
 #include <stddef.h>
 #include <string.h>
@@ -41,7 +43,6 @@ unsigned int micros()
 {
     return(GET32(ARM_TIMER_CNT));
 }
-
 */
 
 #define ARM_SYSTIMER_BASE	(PBASE + 0x3000)
@@ -56,7 +57,6 @@ unsigned int micros()
 
 unsigned int micros()
 {
-    //return(GET32(ARM_TIMER_CNT));
     return GET32(ARM_SYSTIMER_CLO);
 }
 
@@ -130,24 +130,20 @@ uint32_t end_of_message_marker
 
 unsigned mbox_writeread(unsigned nData)
 {
-	while(GET32(MAILBOX1_STATUS) & MAILBOX_STATUS_FULL)
-	{
-		// do nothing
-	}
+	while (GET32(MAILBOX1_STATUS) & MAILBOX_STATUS_FULL)
+        ;
 
 	PUT32(MAILBOX1_WRITE, BCM_MAILBOX_PROP_OUT | nData);
 
 	unsigned nResult;
 	do
 	{
-		while(GET32(MAILBOX0_STATUS) & MAILBOX_STATUS_EMPTY)
-		{
-			// do nothing
-		}
+		while (GET32(MAILBOX0_STATUS) & MAILBOX_STATUS_EMPTY)
+            ;
 
 		nResult = GET32(MAILBOX0_READ);
 	}
-	while((nResult & 0xF) != BCM_MAILBOX_PROP_OUT);
+	while ((nResult & 0xF) != BCM_MAILBOX_PROP_OUT);
 
 	return nResult & ~0xF;
 }
@@ -210,7 +206,7 @@ uint64_t get_board_serial()
 
 	mbox_writeread((unsigned)(unsigned long) &proptag);
 
-    return(((uint64_t)proptag[5]) << 32) | proptag[6];
+    return (((uint64_t)proptag[5]) << 32) | proptag[6];
 }
 
 unsigned get_board_revision()
