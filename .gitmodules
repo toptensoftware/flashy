@@ -1,0 +1,3 @@
+[submodule "Rules"]
+	path = Rules
+	url = git@github.com:toptensoftware/Rules
