@@ -155,7 +155,7 @@ function serialPort(serialPortName, options)
         logfile(`switchBaud: ${baud}`);
 
         // Redundant?
-        if (serialPortOptions.baudRate == baud)
+        if (serialPortOptions.baudRate == baud && port)
              return;
 
         // If open, close and re-open

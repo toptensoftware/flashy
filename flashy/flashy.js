@@ -173,7 +173,7 @@ async function sendHexFile(layer, hexFile)
         if (cl.goSwitch || cl.hexFile)
         {
             // Set default baud
-            port.switchBaud(115200);
+            await port.switchBaud(115200);
             
             // Open packet layer
             let packetLayerOptions = {
