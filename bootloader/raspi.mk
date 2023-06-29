@@ -47,12 +47,20 @@ endif
 ARMTOOLS_VERSION=12.2.rel1
 ifeq ($(AARCH),32)
 PREFIX ?= $(ARMTOOLS)/arm-gnu-toolchain-$(ARMTOOLS_VERSION)-$(ARMTOOLS_PLATFORM)-arm-none-eabi/bin/arm-none-eabi-
+STRICTALIGNFLAG := -mno-unaligned-access
 else ifeq ($(AARCH),64)
 PREFIX ?= $(ARMTOOLS)/arm-gnu-toolchain-$(ARMTOOLS_VERSION)-$(ARMTOOLS_PLATFORM)-aarch64-none-elf/bin/aarch64-none-elf-
+STRICTALIGNFLAG := -mstrict-align
 else
 $(error Unknown AARCH: '$(AARCH)')
 endif
 MAKEFLAGS += --no-print-directory
+
+# Strict align?
+STRICTALIGN ?= 1
+ifeq ($(strip $(STRICTALIGN)),1)
+ARCHFLAGS += $(STRICTALIGNFLAG)
+endif
 
 # C Options
 GCC_COMMONFLAGS += -nostdlib -nostartfiles -ffreestanding $(ARCHFLAGS)
