@@ -13,6 +13,7 @@
             ],
             "type": "node",
             "args": [
+                "--help",
                 "COM3",
                 "blink/kernel7l.hex",
                 "--reboot:ccw_tada",

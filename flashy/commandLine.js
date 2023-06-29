@@ -45,6 +45,7 @@ function showHelp()
     console.log("                              auto = yes if flash baud rate > 1M");
     console.log("--bootloader[:<dir>]       Save the bootloader kernel images to directory <dir>");
     console.log("                           or the current directory if <dir> not specified.");
+    console.log("                           (note: overwrites existing files without prompting)");
     console.log("--status                   Display device status info without flashing")
     console.log("--noVersionCheck           Don't check bootloader version on device")
     console.log("--noKernelCheck            Don't check the hex filename matches expected kernel type for device");

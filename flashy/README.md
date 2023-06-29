@@ -8,10 +8,12 @@ All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal.
 
 * **New V2** Strong packet encoding with crc32 and all packets acknowledged by device for rebustness
 * **New V2** Stateless device side bootloader for reliable recovery and restart
-* **New V2** Dynamic baud-rate switching (saves updating kernel image on device to switch baud rate)
+* **New V2** Dynamic baud-rate switching saves updating kernel image on device to switch baud rate
 * **New V2** Ability to boost device CPU frequency during high baud uploads
 * **New V2** Automatic idle time baud rate and CPU frequency reset (for recovery)    
-* **New V2** Activity indicator shows ready status feedback
+* **New V2** Activity LED indicator shows ready status feedback
+* **New V2** Bootloader version checks ensures flashy script and bootloader image are compatible
+* **New V2** Kernel checks ensure hexfile being uploaded matches the device
 * **New V2** Configurable packet size and timeout for flexibility with different devices
 * **New V2** Host side .hex file parsing and re-chunking for packet size balancing and simpler
   device side implementation
@@ -87,7 +89,7 @@ flashy --bootloader:D:\
 
 
 
-## Manually Uploads
+## Manual Uploads
 
 A typical command line to reboot the device, flash an image and start monitoring looks like this:
 
@@ -115,10 +117,10 @@ CPU boost can be overridden with the `--cpuBoost` command line option:
 
 ## Activity LED
 
-On devices that have an activity indicator, the bootloader provides the following feedback:
+On devices that have an activity LED, the bootloader provides the following feedback:
 
 * When idle and ready the led flashes in a heartbeat pattern (2 flashes in quick succession every 1 second).
-* When receiving data, the activity LED toggles on receipt of every packet (ie: it flashes rapidly)
+* When receiving data, the activity LED toggles on receipt of every packet (ie: it flashes rapidly, flickers, or appears dim depending on baud rate and packet size)
 * Otherwise the LED is off.  
 
 When the indicator is off, this indicates either the bootloader isn't running, or is still in 
@@ -130,7 +132,7 @@ beat indicator will re-appear.
 
 ## Idle Time Reset
 
-If the bootloader detects an idle time period while in non-default baud rate, or when the CPU frequency
+If the bootloader detects an idle period while in non-default baud rate, or when the CPU frequency
 has been boosted (typically after a failed boot) it will automatically reset itself to the default
 baud rate and original CPU frequency.
 
@@ -138,6 +140,7 @@ This puts the boot loader back in its original state, ready for a new upload att
 state is indicated by the heartbeat signal on the activity LED.
 
 The idle time period can be tweaked with the `--resetBaudTimeout` command line option.
+
 
 
 ## Delayed Starts
@@ -204,6 +207,10 @@ Usage: flashy <serialport> [<hexfile>] [options]
                               auto = yes if flash baud rate > 1M
 --bootloader[:<dir>]       Save the bootloader kernel images to directory <dir>
                            or the current directory if <dir> not specified.
+                           (note: overwrites existing files without prompting)
+--status                   Display device status info without flashing
+--noVersionCheck           Don't check bootloader version on device
+--noKernelCheck            Don't check the hex filename matches expected kernel type for device
 --cwd:<dir>                Change current directory
 --stress:<N>               Send data packets N times (for load testing)
 --monitor                  Monitor serial port
