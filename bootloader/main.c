@@ -269,15 +269,14 @@ void onPacketError(int code)
 // Main
 int main()
 {
-    min_cpu_freq = get_min_cpu_freq();
-    max_cpu_freq = get_max_cpu_freq();
-
     // Boost
     //set_cpu_freq(get_max_cpu_freq());
 
     // Initialize hardware
-    serial_init(current_baud);
     timer_init();
+    serial_init(current_baud);
+    min_cpu_freq = get_min_cpu_freq();
+    max_cpu_freq = get_max_cpu_freq();
 
     // Setup packet decoder
     struct decode_context ctx = {0};

@@ -1,4 +1,4 @@
-PLATFORM ?= rpi2
+PLATFORM ?= rpi4
 CONFIG ?= release
 
 # Crack platform
@@ -61,7 +61,7 @@ DEFINE += AARCH=$(AARCH) AARCH$(AARCH) RASPI=$(RASPI) RASPI$(RASPI)
 # Project Kind
 PROJKIND ?= custom
 HEXFILE = $(TARGET:%.img=%.hex)
-LIBGCC	  := "$(shell $(PREFIX)gcc $(ARCHFLAGS) -print-file-name=libgcc.a)"
+LIBGCC	  := $(shell $(PREFIX)gcc $(ARCHFLAGS) -print-file-name=libgcc.a)
 EXTRALIBS += $(LIBGCC)
 ifeq ($(AARCH),32)
 LINKSCRIPT ?= link_script
@@ -76,7 +76,7 @@ include ../Rules/Rules.mk
 # Link
 $(TARGET): $(PRECOMPILE_TARGETS) $(OBJS) $(LINKPROJECTLIBS)
 	@echo "  LD    $(notdir $@)"
-	$(Q)$(PREFIX)ld -o $@ $^ $(LIBS) $(GCC_LIBS) $(EXTRALIBS) -T $(LINKSCRIPT) --no-warn-rwx-segments -Map $(@:%.img=%.map) -o $(@:%.img=%.elf)
+	$(Q)$(PREFIX)ld -o $@ $^ $(LIBS) $(GCC_LIBS) $(EXTRALIBS) --no-warn-rwx-segments -T $(LINKSCRIPT) -Map $(@:%.img=%.map) -o $(@:%.img=%.elf)
 	$(Q)$(PREFIX)objdump -D $(@:%.img=%.elf) > $(@:%.img=%.lst)
 	$(Q)$(PREFIX)objcopy $(@:%.img=%.elf) -O binary $@
 

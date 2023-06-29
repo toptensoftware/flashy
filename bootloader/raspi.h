@@ -23,6 +23,7 @@ extern void dummy(unsigned int);
 // Timer
 void timer_init();
 unsigned int micros();
+unsigned int systimer_micros();
 void delay_micros(unsigned int period);
 
 // Mailbox
@@ -88,3 +89,4 @@ void uart_sendln_hex32(unsigned int d);
 void uart_send_hex4(int rc);
 void uart_send_hex8(int val);
 void uart_send_str(const char* psz);
+void uart_send_dec(unsigned int d);

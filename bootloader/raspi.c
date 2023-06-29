@@ -32,18 +32,16 @@ int start_main()
 
 void  timer_init()
 {
-    //0xF9+1 = 250
-    //250MHz/250 = 1MHz
-    PUT32(ARM_TIMER_CTL,0x00F90000);
-    PUT32(ARM_TIMER_CTL,0x00F90200);
+    // Freq is get_core_clock()/(prescale+1)
+    // 0x200 = enable free running counter at ARM_TIMER_CNT
+    int prescalar = ((get_core_clock() / 1000000) - 1);
+    PUT32(ARM_TIMER_CTL, prescalar << 16 | 0x200);
 }
 
-/*
 unsigned int micros()
 {
     return(GET32(ARM_TIMER_CNT));
 }
-*/
 
 #define ARM_SYSTIMER_BASE	(PBASE + 0x3000)
 
@@ -55,11 +53,11 @@ unsigned int micros()
 #define ARM_SYSTIMER_C2		(ARM_SYSTIMER_BASE + 0x14)
 #define ARM_SYSTIMER_C3		(ARM_SYSTIMER_BASE + 0x18)
 
-unsigned int micros()
+
+unsigned int systimer_micros()
 {
     return GET32(ARM_SYSTIMER_CLO);
 }
-
 
 
 void delay_micros(unsigned int period)
@@ -843,6 +841,15 @@ void uart_send_hex32(unsigned int d)
         if(rb==0) break;
     }
     uart_send(0x20);
+}
+
+void uart_send_dec(unsigned int d)
+{
+    if (d > 10)
+    {
+        uart_send_dec(d / 10);
+    }
+    uart_send('0' + (d % 10));
 }
 
 void uart_sendln_hex32(unsigned int d)
