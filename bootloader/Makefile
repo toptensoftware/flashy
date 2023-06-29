@@ -2,6 +2,11 @@
 # Also define BOOTLOADER so vector.S inserts space for loaded program
 ARCHFLAGS=-DBOOTLOADER
 
+# Pass flashy version from package.json to C code for the PING ack response
+FLASHY_VERSION := $(shell node -p "require('../flashy/package.json').version")
+COMMA := ,
+DEFINE += FLASHY_VERSION=$(subst .,$(COMMA),$(FLASHY_VERSION)),0
+
 # Main make rules
 include raspi.mk
 

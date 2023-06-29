@@ -170,22 +170,28 @@ function layer(port, options)
         
                 // Decode response
                 let r = {
-                    version: data.readUInt32LE(0),
-                    boardRevision: data.readUInt32LE(4),
-                    boardSerialHi: data.readUInt32LE(8),
-                    boardserialLo: data.readUInt32LE(12),
-                    maxPacketSize: data.readUInt32LE(16),
-                    cpu_freq: data.readUInt32LE(20),
-                    measured_cpu_freq: data.readUInt32LE(24),
-                    min_cpu_freq: data.readUInt32LE(28),
-                    max_cpu_freq: data.readUInt32LE(32),
-                    baud: data.readUInt32LE(36),
+                    verMajor: data[0],
+                    verMinor: data[1],
+                    verBuild: data[2],
+                    raspi: data.readUInt32LE(4),
+                    aarch: data.readUInt32LE(8),
+                    boardRevision: data.readUInt32LE(12),
+                    boardSerialHi: data.readUInt32LE(16),
+                    boardserialLo: data.readUInt32LE(20),
+                    maxPacketSize: data.readUInt32LE(24),
+                    cpu_freq: data.readUInt32LE(28),
+                    min_cpu_freq: data.readUInt32LE(32),
+                    max_cpu_freq: data.readUInt32LE(36),
                 }
                 process.stdout.write(" ok\n");
 
                 if (showDeviceInfo)
                 {
-                    process.stdout.write(`Found device: ${piModel.piModelFromRevision(r.boardRevision).name}, serial: ${format_hex(r.boardSerialHi, 8)}-${format_hex(r.boardserialLo, 8)}, loader: v${r.version}, max packet: ${r.maxPacketSize}\n`);
+                    process.stdout.write(`Found device: \n`);
+                    process.stdout.write(`    - ${piModel.piModelFromRevision(r.boardRevision).name}\n`);
+                    process.stdout.write(`    - Serial: ${format_hex(r.boardSerialHi, 8)}-${format_hex(r.boardserialLo, 8)}\n`);
+                    process.stdout.write(`    - CPU Clock: ${r.cpu_freq / 1000000}MHz (range: ${r.min_cpu_freq/1000000}-${r.max_cpu_freq/1000000}MHz)\n`);
+                    process.stdout.write(`    - Bootloader: rpi${r.raspi}-aarch${r.aarch} v${r.verMajor}.${r.verMinor}.${r.verBuild}, max packet size: ${r.maxPacketSize}\n`);
                 }
 
                 //process.stdout.write(`cpu_freq: current: ${r.cpu_freq/1000000}, measured:${r.measured_cpu_freq/1000000}, min: ${r.min_cpu_freq/1000000}, max: ${r.max_cpu_freq/1000000}\n`);

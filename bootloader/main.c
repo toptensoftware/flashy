@@ -29,6 +29,14 @@ uint32_t original_cpu_freq = 0;
 uint32_t min_cpu_freq = 0;
 uint32_t max_cpu_freq = 0;
 
+struct __attribute__((__packed__)) VERSION
+{
+    uint8_t major;
+    uint8_t minor;
+    uint8_t build;
+    uint8_t revision;
+};
+
 // Packets ID
 enum PACKET_ID
 {
@@ -45,15 +53,15 @@ enum PACKET_ID
 // device is alive and well and to report some info about the device
 struct PACKET_PING_ACK
 {
-    uint32_t version;            // Bootloader version
+    struct VERSION version;            // Bootloader version
+    uint32_t raspi;              // Bootloader raspi version 1..4
+    uint32_t aarch;              // Bootloader AARCH (32 or 64)
     uint32_t boardrev;           // Board revision
     uint64_t boardserial;        // Board serial number
     uint32_t maxpacketsize;      // Maximum size of accepted packet
-    uint32_t cpu_freq;
-    uint32_t measured_cpu_freq;
-    uint32_t min_cpu_freq;
-    uint32_t max_cpu_freq;
-    uint32_t baudrate;           // Currently selected baud rate
+    uint32_t cpu_freq;           // Current CPU freq
+    uint32_t min_cpu_freq;       // Min CPU freq
+    uint32_t max_cpu_freq;       // Max CPU freq
 };
 
 // Error report packet
@@ -147,17 +155,18 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cbData)
     {
         case PACKET_ID_PING:
         {
+            struct VERSION ver = { FLASHY_VERSION };
             // Send ack packet with version and current rate
             struct PACKET_PING_ACK ack;
-            ack.version = 1;
+            ack.version = ver;
+            ack.raspi = RASPI;
+            ack.aarch = AARCH;
             ack.boardrev = get_board_revision ();
             ack.boardserial = get_board_serial ();
             ack.maxpacketsize = sizeof(decoder_buf);
             ack.cpu_freq = get_cpu_freq();
-            ack.measured_cpu_freq = get_measured_cpu_freq();
             ack.min_cpu_freq = min_cpu_freq;
             ack.max_cpu_freq = max_cpu_freq;
-            ack.baudrate = current_baud;
             sendPacket(seq, PACKET_ID_ACK, &ack, sizeof(ack));
             break;
         }
