@@ -5,6 +5,7 @@
 
 let packenc = require('./packetEncoder');
 let piModel = require('./piModel');
+let FlashyError = require('./FlashyError');
 
 
 // Packet ID's
@@ -203,7 +204,7 @@ function layer(port, options)
             }
         }
 
-        throw new Error(`Failed to ping device after ${options.ping_attempts} attempts.`)
+        throw new FlashyError(`Failed to ping device after ${options.ping_attempts} attempts.`)
     }
 
     // Sends a request to device to switch baud rate and on success

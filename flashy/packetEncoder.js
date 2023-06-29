@@ -125,11 +125,11 @@ function packet_decoder(callback, error, maxlength)
     let crcRecv;
     let crcCalc;
 
-    function  flush_intermediate_data()
+    function flush_intermediate_data()
     {
         if (length > 0)
         {
-            console.log(`intermediate data: '${buf.subarray(0, length)}'`);
+            //console.log(`intermediate data: '${buf.subarray(0, length)}'`);
             length = 0;
         }
     }   

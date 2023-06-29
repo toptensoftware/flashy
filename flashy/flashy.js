@@ -15,8 +15,10 @@ let serial = require('./serial');
 let packetLayer = require('./packetLayer');
 let intelHex = require('./intelHex');
 let cl = require('./commandLine');
-let wslUtils = require('./wslUtils');
+let FlashyError = require('./FlashyError');
 
+
+let wslUtils = require('./wslUtils');
 // If running under WSL2 and trying to use a regular serial port
 // relaunch self as a Windows process
 if (wslUtils.isWsl2() && cl.serialPortName && cl.serialPortName.startsWith("/dev/ttyS"))
@@ -48,10 +50,10 @@ async function sendHexFile(layer, hexFile)
 
         // Shouldn't have received EOF yet
         if (eofReceived)
-            throw new Error("Unexpected data after EOF record in hex file");
+            throw new FlashyError("Unexpected data after EOF record in hex file");
 
         // Handle record
-    switch (record.type)
+        switch (record.type)
         {
             case '00':
                 // DATA
@@ -79,16 +81,16 @@ async function sendHexFile(layer, hexFile)
             case '02':
                 // Extended segment address
                 if (record.data.length != 2)
-                    throw new Error("Unexpected length of '02' hex record");
+                    throw new FlashyError("Unexpected length of '02' hex record");
                 segment = record.data.readUInt16BE(0) << 4;
                 break;
                 
             case '03':
                 // Start segment address
                 if (record.data.length != 4)
-                    throw new Error("Unexpected length of '03' hex record");
+                    throw new FlashyError("Unexpected length of '03' hex record");
                 if (startAddress !== null)
-                    throw new Error("Hex file contains multiple start addresses");
+                    throw new FlashyError("Hex file contains multiple start addresses");
                 startAddress = (record.data.readUInt16BE(0) << 4) + 
                                 record.data.readUInt16BE(2);
                 break;
@@ -96,16 +98,16 @@ async function sendHexFile(layer, hexFile)
             case '04':
                 // Extended linear address
                 if (record.data.length != 2)
-                    throw new Error("Unexpected length of '04' hex record");
+                    throw new FlashyError("Unexpected length of '04' hex record");
                 segment = record.data.readUInt16BE(0);
                 break;
 
             case '05':
                 // Start linear address
                 if (record.data.length != 4)
-                    throw new Error("Unexpected length of '03' hex record");
+                    throw new FlashyError("Unexpected length of '03' hex record");
                 if (startAddress !== null)
-                    throw new Error("Hex file contains multiple start addresses");
+                    throw new FlashyError("Hex file contains multiple start addresses");
                 startAddress = record.data.readUInt32BE(0);
                 break;
         }
@@ -113,7 +115,7 @@ async function sendHexFile(layer, hexFile)
     
     // Check EOF was received
     if (!eofReceived)
-    throw new Error("Hex file didn't contain an EOF record");
+    throw new FlashyError("Hex file didn't contain an EOF record");
     
     // Check we got a start address
     if (startAddress == null)
@@ -127,7 +129,101 @@ async function sendHexFile(layer, hexFile)
     return startAddress == null ? 0xFFFFFFFF : startAddress;
 }
 
+// Check the bootloader version and this script's version number match
+function checkVersion(ping)
+{
+    // Check version of flashy tool matches version of bootloader
+    let pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')), "utf8");
+    let verParts = pkg.version.split('.').map(x => Number(x));
+    if (verParts[0] != ping.verMajor || verParts[1] != ping.verMinor || verParts[2] != ping.verBuild)
+    {
+        console.error("\nBootloader version mismatch:")
+        console.error(`    - bootloader version: ${ping.verMajor}.${ping.verMinor}.${ping.verBuild}`);
+        console.error(`    - flashy version: ${pkg.version}`);
+        if (cl.checkVersion)
+        {
+            console.error(`Aborting. Use '--noVersionCheck' to override or '--bootloader:<sdcard>' to get the latest images.\n`);
+            throw new FlashyError();
+        }
+        else
+        {
+            console.error(`Use '--bootloader:<sdcard>' to get the latest images.\n`);
+        }
+    }
+}
 
+// Check the hexfile name looks like the right kernel image for the device
+function checkKernel(ping, hexfile)
+{
+    // Disabled?
+    if (!cl.checkKernel)
+        return;
+
+    // Does the hexfile name look like kernel name?
+    if (hexfile.indexOf('kernel') < 0)
+        return;
+
+    // Work out what image name we expect (can be multiple on pi3)
+    let expectedImageName=[];
+    switch (ping.raspi)
+    {
+        case 1: 
+            expectedImageName.push('kernel'); 
+            break;
+
+        case 2: 
+            expectedImageName.push('kernel7'); 
+            break;
+
+        case 3: 
+            if (ping.aarch == 32)
+            {
+                expectedImageName.push('kernel7'); 
+                expectedImageName.push('kernel8-32'); 
+            }
+            else
+                expectedImageName.push('kernel8');
+            break;
+
+        case 4: 
+            if (ping.aarch == 32)
+                expectedImageName.push('kernel7l'); 
+            else 
+                expectedImageName.push('kernel8-rpi4');
+            break;
+    }
+
+    // Match?
+    for (let en of expectedImageName)
+    {
+        if (hexfile.indexOf(en) >= 0)
+            return;
+    }
+
+    // Log and quit
+    console.error("\nImage file mismatch");
+    console.error(`    - hex file: ${path.basename(hexfile)}`);
+    console.error(`    - expected: ${expectedImageName.map(x=> x + ".hex").join(" or ")} (for rpi${ping.raspi}-aarch${ping.aarch})`);
+    console.error("Aborting.  Use '--noVersionCheck' to override.\n");
+    throw new FlashyError();
+}
+
+// Check the user hasn't selected a packet size larger than
+// what the bootloader can support
+function checkPacketSize(ping)
+{
+    if (cl.packetSize > ping.maxPacketSize)
+    {
+        console.error(`\nPacket size too large:`);
+        console.error(`    - requested: ${cl.packetSize}`);
+        console.error(`    - supported: ${ping.maxPacketSize}`);
+        console.error(`Aborting. Please choose a smaller packet size.\n`);
+        throw new FlashyError();
+    }
+}
+
+
+// Main!
 (async function() {
 
     // Extract bootloader images
@@ -162,7 +258,7 @@ async function sendHexFile(layer, hexFile)
         }
 
         // Open?
-        if (cl.goSwitch || cl.hexFile)
+        if (cl.goSwitch || cl.hexFile || cl.status)
         {
             // Set default baud
             await port.switchBaud(115200);
@@ -178,18 +274,18 @@ async function sendHexFile(layer, hexFile)
             // Wait for device
             let ping = await layer.ping(true);
 
+            // Check bootloader version
+            checkVersion(ping);
+
             // Send hex file
             let startAddress = cl.goAddress == null ? 0xFFFFFFFF : cl.goAddress;
             if (cl.hexFile)
             {
+                // Check kernel kind
+                checkKernel(ping, cl.hexFile);
+                
                 // Check the selected packet size is supported by the bootloader
-                if (cl.packetSize > ping.maxPacketSize)
-                {
-                    process.stderr.write(`Packet size ${cl.packetSize} exceeds supported packet size of bootloader ${ping.maxPacketSize}.\n`);
-                    process.stderr.write(`Please choose a smaller packet size, or rebuild the bootloader with a larger max_packet_size setting.\n`);
-                    process.exit(7);
-                }
-    
+                checkPacketSize(ping);
                 
                 // Switch baud rate and cpu frequency while sending file
                 let cpufreq = 0;
@@ -227,6 +323,16 @@ async function sendHexFile(layer, hexFile)
             // Wait for a never delivered promise to keep alive
             await new Promise((resolve) => { });
         }
+    }
+    catch (err)
+    {
+        if (err instanceof FlashyError)
+        {
+            if (err.message)
+                console.log(err.message);
+        }
+        else
+            throw err;
     }
     finally
     {

@@ -15,7 +15,8 @@
             "args": [
                 "COM3",
                 "blink/kernel7l.hex",
-                "--nogo",
+                "--reboot:ccw_tada",
+                "--packetSize:4096"
             ],
             "console": "integratedTerminal"
         }

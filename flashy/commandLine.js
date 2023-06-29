@@ -45,6 +45,9 @@ function showHelp()
     console.log("                              auto = yes if flash baud rate > 1M");
     console.log("--bootloader[:<dir>]       Save the bootloader kernel images to directory <dir>");
     console.log("                           or the current directory if <dir> not specified.");
+    console.log("--status                   Display device status info without flashing")
+    console.log("--noVersionCheck           Don't check bootloader version on device")
+    console.log("--noKernelCheck            Don't check the hex filename matches expected kernel type for device");
     console.log("--cwd:<dir>                Change current directory");
     console.log("--stress:<N>               Send data packets N times (for load testing)");
     console.log(`--monitor                  Monitor serial port`);
@@ -82,6 +85,9 @@ function parseCommandLine()
         serialLog: null,
         bootloader: null,
         stress: 1,
+        status: false,
+        checkVersion: true,
+        checkKernel: true,
     };
 
     for (let i=2; i<process.argv.length; i++)
@@ -183,6 +189,18 @@ function parseCommandLine()
                 case "stress":
                     cl.stress = Number(value);
                     break;  
+
+                case "status":
+                    cl.status = true;
+                    break;
+
+                case "noversioncheck":
+                    cl.checkVersion = false;
+                    break;
+
+                case "nokernelcheck":
+                    cl.checkKernel = false;
+                    break;
 
                 default:
                     fail(`Unknown switch --${sw}`);
