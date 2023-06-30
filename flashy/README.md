@@ -138,18 +138,19 @@ a command is sent to the device to change to a faster baud rate for the image up
 
 The upload baud rate is controlled by the `--flashBaud:NNN` option and defaults to 1M baud.
 
-Most devices can handle faster rates that this (typically 2M) but the default is 1M to give
+Most devices can handle faster rates (typically 2M) but the default is 1M to give
 some margin for reliability.  Feel free to experiment with this setting to get faster uploads.
 
 
 
 ## Magic Reboots
 
-Flashy can send a "magic reboot" string.  For this to work the currently running image must be 
-monitoring for the supplied string and be configured to reboot when detected.
+Flashy can send a "magic reboot" string.  For this to work the currently running image (ie: your
+program) must be monitoring the serial port for the supplied string and be configured to reboot 
+when detected.
 
-If you're project uses Circle, use the `CSerialDevice::RegisterMagicReceivedHandler` method to
-set this up.
+If your project uses Circle, use the [`CSerialDevice::RegisterMagicReceivedHandler`](https://github.com/rsta2/circle/blob/3b6c4a160a6321cb05363aea2010ff0b2d6eb52d/include/circle/serial.h#L122C6-L122C6) 
+method to set this up.
 
 Send reboot strings with the `--reboot:<magic>` command line option:
 
@@ -161,7 +162,7 @@ By default reboot strings are sent at 115200 baud.  Use the `--userBaud:NNN` opt
 change this.
 
 You can combine reboot strings with sending an image in which case the reboot string will be
-sent and the device monitored until it's ready to accept the image upload.
+sent and once the bootloader is running again the image will be uploaded.
 
 
 eg: Reboot the device, and then send kernel7.hex
@@ -181,6 +182,10 @@ Monitoring is done at the `--userBaud:NNN` baud rate (by default 115200)
 Enable this with the `--monitor` option.
 
 
+eg: Reboot the device, then send kernel7.hex, then monitor serial port output:
+```
+flashy /dev/ttyS3 kernel7.hex --reboot:myMagicString --monitor
+```
 
 ## Sanity Checks
 
