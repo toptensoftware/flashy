@@ -6,18 +6,18 @@ Flashy lets you upload and run kernel images to a Raspberry Pi via a serial port
 
 ## Features
 
-* **New V2** Dynamic baud-rate switching saves updating kernel image on device to switch baud rate
-* **New V2** Activity LED indicator shows ready status feedback
-* **New V2** Includes packaged pre-compiled bootloader images
-* **New V2** Supports sending `.img` or `.hex` image files
-* **New V2** Ability to boost device CPU frequency during high baud uploads
-* **New V2** Kernel checks ensure hexfile being uploaded matches the device
-* **New V2** Strong packet encoding with crc32 and all packets acknowledged by device for rebustness
-* **New V2** Stateless device side bootloader for reliable recovery and restart
-* **New V2** Automatic idle time baud rate and CPU frequency reset (for recovery)    
-* **New V2** Bootloader version checks ensures flashy script and bootloader image are compatible
-* **New V2** Configurable packet size and timeout for flexibility with different devices
-* **New V2** Host side .hex file parsing and re-chunking for packet size balancing and simpler
+* **New V2** - Dynamic baud-rate switching saves updating kernel image on device to switch baud rate
+* **New V2** - Activity LED indicator shows ready status feedback
+* **New V2** - Includes packaged pre-compiled bootloader images
+* **New V2** - Supports sending `.img` or `.hex` image files
+* **New V2** - Ability to boost device CPU frequency during high baud uploads
+* **New V2** - Kernel filename checks ensure hexfile being uploaded matches the device
+* **New V2** - Strong packet encoding with crc32 and all packets acknowledged by device for rebustness
+* **New V2** - Stateless device side bootloader for reliable recovery and restart
+* **New V2** - Automatic idle time baud rate and CPU frequency reset (for recovery)    
+* **New V2** - Bootloader version checks ensures flashy script and bootloader image are compatible
+* **New V2** - Configurable packet size and timeout for flexibility with different devices
+* **New V2** - Host side .hex file parsing and re-chunking for packet size balancing and simpler
   device side implementation
 * Binary mode transfers (faster than sending .hex file as text)
 * Supports sending magic reboot strings
