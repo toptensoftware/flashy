@@ -27,8 +27,7 @@ Flashy lets you upload and run kernel images to a Raspberry Pi via a serial port
 
 ## Rationale for v2
 
-Flashy v2 is a complete re-write of Flashy v1 and the original bootloader program.  The 
-entire project has been cleaned up, refactored and re-engineered with a focus on robustness.
+Flashy v2 is a complete re-write of Flashy v1 and David Welch's original bootloader program.  The entire project has been cleaned up, refactored and re-engineered with a focus on robustness.
 
 While Flashy v1 could provide very fast flash times it often suffered from reliability and
 recovery issues.  It typically just saturated the serial port write buffer and hoped the 
