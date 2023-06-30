@@ -184,12 +184,13 @@ function layer(port, options)
                     min_cpu_freq: data.readUInt32LE(32),
                     max_cpu_freq: data.readUInt32LE(36),
                 }
+                r.model = piModel.piModelFromRevision(r.boardRevision);
                 process.stdout.write(" ok\n");
 
                 if (showDeviceInfo)
                 {
                     process.stdout.write(`Found device: \n`);
-                    process.stdout.write(`    - ${piModel.piModelFromRevision(r.boardRevision).name}\n`);
+                    process.stdout.write(`    - ${r.model.name}\n`);
                     process.stdout.write(`    - Serial: ${format_hex(r.boardSerialHi, 8)}-${format_hex(r.boardserialLo, 8)}\n`);
                     process.stdout.write(`    - CPU Clock: ${r.cpu_freq / 1000000}MHz (range: ${r.min_cpu_freq/1000000}-${r.max_cpu_freq/1000000}MHz)\n`);
                     process.stdout.write(`    - Bootloader: rpi${r.raspi}-aarch${r.aarch} v${r.verMajor}.${r.verMinor}.${r.verBuild}, max packet size: ${r.maxPacketSize}\n`);

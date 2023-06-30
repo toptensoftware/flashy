@@ -215,7 +215,7 @@ function checkKernel(ping, filename)
 
     // Work out what image name we expect (can be multiple on pi3)
     let allowedKernelNames=[];
-    switch (ping.raspi)
+    switch (ping.model.major)
     {
         case 1: 
             allowedKernelNames.push('kernel'); 

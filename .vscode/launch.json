@@ -14,9 +14,8 @@
             "type": "node",
             "args": [
                 "COM3",
-                "blink/kernel8.img",
+                "blink/kernel8-32.img",
                 "--reboot:ccw_tada",
-                "--noVersionCheck",
                 "--monitor",
             ],
             "console": "integratedTerminal"
