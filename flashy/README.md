@@ -206,19 +206,19 @@ Flashy performs a number of sanity checks to ensure correct behaviour and help p
 Sometimes you'll need time between uploading a program image and the program starting.  There are
 two ways to do this:
 
-1. Use `--goDelay:NNN` where NNN is a number of milliseconds the bootloaded will stall for after
+1. Use `--goDelay:NNN` where NNN is the number of milliseconds to stall after
    the upload, but before starting the program
 2. Use `--noGo` - this will cause the bootloader to accept the uploaded program but doesn't start it.
    To later manually start the program, use the `--go` option.
 
-The `--goDelay` is particularly handy for giving time to start a serial monitor program so he start 
+The `--goDelay` is particularly handy for giving time to start a serial monitor program so the start 
 of the program's debug log isn't missed.
 
 
 
 ## CPU Boost
 
-At high upload rates (> 1M baud) the device's CPU frequency is boosted to the maximum rate
+At upload rates over 1M baud the device's CPU frequency is boosted to the maximum rate
 for the period of the upload.  This helps the device keep up with the data rate and often
 prevents a failed upload.
 
@@ -228,7 +228,10 @@ CPU boost can be overridden with the `--cpuBoost` command line option:
 * `--cpuBoost:yes` - boost CPU even for < 1M baud uploads
 * `--cpuBoost:auto` - the default boost of > 1M baud upload.
 
-
+Note: since the bootloader runs before the MMU or caches are enabled, the device doesn't
+run as fast as usual.  Boosting the CPU frequency is an easily reversible change that lets
+faster baud rates work.  Enabling the MMU and caches is not desirable in this situation 
+because it would leave the machine in a different operating environment to a normal "non-flashed" boot.
 
 ## Packet Size
 
@@ -245,7 +248,8 @@ can try using a smaller packet size with the `--packetSize:NNN` option.
 
 ## Stress Testing
 
-Flashy includes a `--stress:N` option that simply causes each image upload packet to be sent `N` times.  
+Flashy includes a `--stress:N` option that simulates a large upload by sneding each data packet 
+`N` times. 
 
 This can be handy for checking throughput rates, reliability, recoverability etc...
 
@@ -262,8 +266,9 @@ There's a couple of solutions for this:
 * Install Flashy on both the Windows host and the WSL2 operating system and let it find itself.
 
 When flashy is launched in a WSL-2 environment with a `/dev/ttyS*` serial port name it will
-attempt to relaunch itself as a Windows process from where it has access to serial ports. For this 
-to work, Flashy needs to be installed as an npm global tool on both the Windows host
+attempt to relaunch itself as a Windows process where it does have access to the COM ports. 
+
+For this to work, Flashy needs to be installed as an npm global tool on both the Windows host
 machine and the WSL guest operating system.
 
 ie: 
@@ -274,6 +279,8 @@ ie:
 Once installed in both environments, Flashy will detect when you're using a serial port, 
 find itself in Windows and relaunch itself automatically.
 
+Currently there are no version checks between the two platforms - always make sure you've
+got the same version of Flashy installed on both Windows and the WSL machine.
 
 ## Supported Devices
 
