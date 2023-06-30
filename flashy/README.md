@@ -229,12 +229,12 @@ CPU boost can be overridden with the `--cpuBoost` command line option:
 ## Packet Size
 
 All communications between Flashy and the bootloader is done using binary data packets.  Most
-of these packets are quite small except with uploading image data in which case they're 4K (by 
+of these packets are quite small except when uploading image data in which case they're 4K (by 
 default).
 
 This default was chosen as it gives a good balance between performance, reliability and overhead.
 
-If your having reliability issues you can try reducing either the `--flashBaud:NNN` setting or you
+If you're having reliability issues you can try reducing either the `--flashBaud:NNN` setting or you
 can try using a smaller packet size with the `--packetSize:NNN` option.
 
 
@@ -243,7 +243,7 @@ can try using a smaller packet size with the `--packetSize:NNN` option.
 
 Flashy includes a `--stress:N` option that simply causes each image upload packet to be sent `N` times.  
 
-This can be handy for checking through put rates, reliability, recoverability etc...
+This can be handy for checking throughput rates, reliability, recoverability etc...
 
 
 
@@ -292,7 +292,7 @@ Usage: flashy <serialport> [<imagefile>] [options]
 --serialLog:<file>         File to write low level log of serial comms
 --resetBaudTimeout:<N>     How long device should wait for packet before resetting
                            to the default baud and CPU frequent boost(default=500ms)
---cpuBoost:<yes|no|auto>   whether to boost CPU clock frequency during uploads
+--cpuBoost:<yes|no|auto>   Whether to boost CPU clock frequency during uploads
                               auto = yes if flash baud rate > 1M
 --bootloader[:<dir>]       Save the bootloader kernel images to directory <dir>
                            or the current directory if <dir> not specified.
