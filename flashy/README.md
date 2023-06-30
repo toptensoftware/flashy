@@ -47,7 +47,7 @@ for all host to device transmissions.  It also offers several other improvements
 
         > npm install -g @toptensoftware/flashy
 
-2. Copy the bootloader kernel images to the Raspberry Pi SD card
+2. Copy the bootloader kernel images to the Raspberry Pi SD card (assumes other boot files already present)
 
         > flashy --bootloader:path_to_your_sd_card
 
@@ -72,8 +72,9 @@ npm install -g @toptensoftware/flashy
 sudo npm install -g @toptensoftware/flashy
 ```
 
-Next you need to copy the bootloader kernel image files to the SD card of your Pi.  The kernel
-images are included in the installed package and can be extracted using the `--bootloader` option:
+Next you need to copy the bootloader kernel image files along with the other files require to boot 
+([see here](https://github.com/rsta2/circle/blob/master/boot/README)) to the SD card of your Pi.  The
+bootloader kernel images are included with Flashy and can be extracted using the `--bootloader` option:
 
 eg: To place a copy of the kernel images in the root of drive D:
 
@@ -81,7 +82,23 @@ eg: To place a copy of the kernel images in the root of drive D:
 flashy --bootloader:D:\
 ```
 
-Note: the `--bootloader` command will overwrite existing files.
+Note: the `--bootloader` command will overwrite existing files and only includes the kernel image files - 
+you still need to setup the rest of the boot partition yourself, including `config.txt`.
+
+Next boot the device from the SD card and confirm it's running by looking for a heart beat pattern on the 
+activity LED. You can also confirm the serial connection with the `--status` command line option:
+
+```
+$>flashy /dev/ttyS3 --status
+Opening /dev/ttsS3 at 115,200 baud... ok
+Waiting for device... ok
+Found device:
+    - Raspberry Pi 3 Model B+
+    - Serial: 00000000-bc1b1209
+    - CPU Clock: 600MHz (range: 600-1400MHz)
+    - Bootloader: rpi2-aarch32 v2.0.13, max packet size: 4096
+Closing serial port... ok
+```
 
 
 ## Manual Uploads
@@ -133,7 +150,7 @@ set this up.
 Send reboot strings with the `--reboot:<magic>` command line option:
 
 ```
-flashy COM3 --reboot:myMagicString
+flashy /dev/ttyS3 --reboot:myMagicString
 ```
 
 By default reboot strings are sent at 115200 baud.  Use the `--userBaud:NNN` option to 
@@ -145,7 +162,7 @@ sent and the device monitored until it's ready to accept the image upload.
 
 eg: Reboot the device, and then send kernel7.hex
 ```
-flashy COM3 kernel7.hex --reboot:myMagicString
+flashy /dev/ttyS3 kernel7.hex --reboot:myMagicString
 ```
 
 
