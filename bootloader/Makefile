@@ -14,4 +14,5 @@ include raspi.mk
 # Create zip archive
 bootloader.zip:
 	@$(MAKE) aarch CONFIG=release
+	rm -f ../flashy/bootloader.zip
 	zip ../flashy/bootloader.zip -r -j . -i *.img
