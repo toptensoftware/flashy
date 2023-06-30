@@ -25,7 +25,6 @@ Flashy lets you upload and run kernel images to a Raspberry Pi via a serial port
 * Delayed image starts (by timeout, or by command)
 
 
-
 ## Rationale for v2
 
 Flashy v2 is a complete re-write of Flashy v1 and the original bootloader program.  The 
@@ -274,6 +273,24 @@ ie:
 
 Once installed in both environments, Flashy will detect when you're using a serial port, 
 find itself in Windows and relaunch itself automatically.
+
+
+## Supported Devices
+
+While Flashy should work on all Raspberry Pi models it's been tested on
+and confirmed to work with the following devices/architectures:
+
+* Raspberry Pi Zero W
+* Raspberry Pi 1 Model B R2
+* Raspberry Pi 2 Model B
+* Raspberry Pi 3 Model B+ (AARCH32/kernel7)
+* Raspberry Pi 3 Model B+ (AARCH32/kernel8-32)
+* Raspberry Pi 3 Model B+ (AARCH64)
+* Raspberry Pi 4 Model B (AARCH32)
+* Raspberry Pi 4 Model B (AARCH64)
+
+All devices were tested at flash baud of 2M except the Pi 2 which required a 
+slower rate of 1.5M baud. (the default flash rate is 1M).
 
 
 
