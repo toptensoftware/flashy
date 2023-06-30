@@ -14,9 +14,10 @@
             "type": "node",
             "args": [
                 "COM3",
-                "blink/kernel8-32.img",
+                "blink/kernel7.img",
                 "--reboot:ccw_tada",
-                "--monitor",
+                "--stress:5",
+                "--flashBaud:2000000",
             ],
             "console": "integratedTerminal"
         }

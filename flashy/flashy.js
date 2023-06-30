@@ -157,13 +157,18 @@ async function sendImgFile(layer, imgFile, aarch)
         // Write the address to the header area
         buf.writeUInt32LE(addr, 0);
 
-        // Update program byte length
-        programBytesSent += length;
-
-        // Send it
-        await layer.sendData(buf.slice(0, length + 4));
-        process.stdout.write('.');
         
+        // Send it
+        for (let i=0; i<cl.stress; i++)
+        {
+            // Update program byte length
+            programBytesSent += length;
+
+            // Send it
+            await layer.sendData(buf.slice(0, length + 4));
+            process.stdout.write('.');
+        }
+
         // Update address
         addr += length;
     }
