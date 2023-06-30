@@ -12,7 +12,7 @@ DEFINE += FLASHY_VERSION=$(subst .,$(COMMA),$(FLASHY_VERSION)),0
 include raspi.mk
 
 # Create zip archive
-bootloader.zip:
+bootloader.zip: cleanall
 	@$(MAKE) aarch CONFIG=release
 	rm -f ../flashy/bootloader.zip
 	zip ../flashy/bootloader.zip -r -j . -i *.img
