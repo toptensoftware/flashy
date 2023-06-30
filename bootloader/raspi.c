@@ -38,7 +38,7 @@ void  timer_init()
     PUT32(ARM_TIMER_CTL, prescalar << 16 | 0x200);
 }
 
-unsigned int micros()
+unsigned int ticks()
 {
     return(GET32(ARM_TIMER_CNT));
 }
@@ -54,7 +54,7 @@ unsigned int micros()
 #define ARM_SYSTIMER_C3		(ARM_SYSTIMER_BASE + 0x18)
 
 
-unsigned int systimer_micros()
+unsigned int micros()
 {
     return GET32(ARM_SYSTIMER_CLO);
 }

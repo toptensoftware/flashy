@@ -22,8 +22,9 @@ extern void dummy(unsigned int);
 
 // Timer
 void timer_init();
+unsigned int ticks();
+
 unsigned int micros();
-unsigned int systimer_micros();
 void delay_micros(unsigned int period);
 
 // Mailbox

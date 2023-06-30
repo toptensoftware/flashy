@@ -278,9 +278,6 @@ void onPacketError(int code)
 // Main
 int main()
 {
-    // Boost
-    //set_cpu_freq(get_max_cpu_freq());
-
     // Initialize hardware
     timer_init();
     serial_init(current_baud);
