@@ -112,14 +112,17 @@ async function sendHexFile(layer, hexFile)
                 break;
         }
     }
+
+    // Close chunker and parser
+    chunker.close();
     
     // Check EOF was received
     if (!eofReceived)
-    throw new FlashyError("Hex file didn't contain an EOF record");
+        throw new FlashyError("Hex file didn't contain an EOF record");
     
     // Check we got a start address
     if (startAddress == null)
-    console.error("WARNING: Hex file didn't report a start address, assuming default");
+        console.error("WARNING: Hex file didn't report a start address, assuming default");
     
     // Show summary
     let elapsedTime = new Date().getTime() - startTime;
@@ -127,6 +130,53 @@ async function sendHexFile(layer, hexFile)
 
     // Return the start address
     return startAddress == null ? 0xFFFFFFFF : startAddress;
+}
+
+
+// Send a img file to device
+async function sendImgFile(layer, imgFile, aarch)
+{
+    // Capture start time
+    let startTime = new Date().getTime();
+
+    process.stdout.write(`Sending '${imgFile}':\n`)
+
+    // Open image file
+    let fd = fs.openSync(imgFile, `r`);
+    let buf = Buffer.alloc(cl.packetSize);
+    let startAddress = (aarch == 64) ? 0x80000 : 0x8000;
+    let addr = startAddress;
+    let programBytesSent = 0;
+    while (true)
+    {
+        // Read a buffer
+        let length = fs.readSync(fd, buf, 4, buf.length - 4);
+        if (length == 0)
+            break;
+
+        // Write the address to the header area
+        buf.writeUInt32LE(addr, 0);
+
+        // Update program byte length
+        programBytesSent += length;
+
+        // Send it
+        await layer.sendData(buf.slice(0, length + 4));
+        process.stdout.write('.');
+        
+        // Update address
+        addr += length;
+    }
+
+    // Close file
+    fs.closeSync(fd);
+    
+    // Show summary
+    let elapsedTime = new Date().getTime() - startTime;
+    process.stdout.write(`\nTransfered ${programBytesSent} bytes in ${((elapsedTime / 1000).toFixed(1))} seconds.\n`);
+
+    // Return the start address
+    return startAddress;
 }
 
 // Check the bootloader version and this script's version number match
@@ -152,58 +202,58 @@ function checkVersion(ping)
     }
 }
 
-// Check the hexfile name looks like the right kernel image for the device
-function checkKernel(ping, hexfile)
+// Check the filename name looks like the right kernel image for the device
+function checkKernel(ping, filename)
 {
     // Disabled?
     if (!cl.checkKernel)
         return;
 
-    // Does the hexfile name look like kernel name?
-    if (hexfile.indexOf('kernel') < 0)
+    // Does the filename name look like kernel name?
+    if (filename.indexOf('kernel') < 0)
         return;
 
     // Work out what image name we expect (can be multiple on pi3)
-    let expectedImageName=[];
+    let allowedKernelNames=[];
     switch (ping.raspi)
     {
         case 1: 
-            expectedImageName.push('kernel'); 
+            allowedKernelNames.push('kernel'); 
             break;
 
         case 2: 
-            expectedImageName.push('kernel7'); 
+            allowedKernelNames.push('kernel7'); 
             break;
 
         case 3: 
             if (ping.aarch == 32)
             {
-                expectedImageName.push('kernel7'); 
-                expectedImageName.push('kernel8-32'); 
+                allowedKernelNames.push('kernel7'); 
+                allowedKernelNames.push('kernel8-32'); 
             }
             else
-                expectedImageName.push('kernel8');
+                allowedKernelNames.push('kernel8');
             break;
 
         case 4: 
             if (ping.aarch == 32)
-                expectedImageName.push('kernel7l'); 
+                allowedKernelNames.push('kernel7l'); 
             else 
-                expectedImageName.push('kernel8-rpi4');
+                allowedKernelNames.push('kernel8-rpi4');
             break;
     }
 
     // Match?
-    for (let en of expectedImageName)
+    for (let en of allowedKernelNames)
     {
-        if (hexfile.indexOf(en) >= 0)
+        if (filename.indexOf(en) >= 0)
             return;
     }
 
     // Log and quit
-    console.error("\nImage file mismatch");
-    console.error(`    - hex file: ${path.basename(hexfile)}`);
-    console.error(`    - expected: ${expectedImageName.map(x=> x + ".hex").join(" or ")} (for rpi${ping.raspi}-aarch${ping.aarch})`);
+    console.error("\nImage name mismatch");
+    console.error(`    - image file: ${path.basename(filename)}`);
+    console.error(`    - expected: ${allowedKernelNames.map(x=> x + ".[img|hex]").join(" or ")} (for rpi${ping.raspi}-aarch${ping.aarch})`);
     console.error("Aborting.  Use '--noVersionCheck' to override.\n");
     throw new FlashyError();
 }
@@ -258,7 +308,7 @@ function checkPacketSize(ping)
         }
 
         // Open?
-        if (cl.goSwitch || cl.hexFile || cl.status)
+        if (cl.goSwitch || cl.imageFile || cl.status)
         {
             // Set default baud
             await port.switchBaud(115200);
@@ -277,12 +327,12 @@ function checkPacketSize(ping)
             // Check bootloader version
             checkVersion(ping);
 
-            // Send hex file
+            // Send image file
             let startAddress = cl.goAddress == null ? 0xFFFFFFFF : cl.goAddress;
-            if (cl.hexFile)
+            if (cl.imageFile)
             {
                 // Check kernel kind
-                checkKernel(ping, cl.hexFile);
+                checkKernel(ping, cl.imageFile);
                 
                 // Check the selected packet size is supported by the bootloader
                 checkPacketSize(ping);
@@ -298,11 +348,14 @@ function checkPacketSize(ping)
                 }
             
                 // Send file
-                startAddress = await sendHexFile(layer, cl.hexFile);
+                if (cl.isHexFile)
+                    startAddress = await sendHexFile(layer, cl.imageFile);
+                else
+                    startAddress = await sendImgFile(layer, cl.imageFile, ping.aarch);
             }
         
             // Send go command
-            if (cl.goSwitch || (cl.hexFile && !cl.nogoSwitch))
+            if (cl.goSwitch || (cl.imageFile && !cl.nogoSwitch))
             {
                 await layer.sendGo(startAddress, cl.goDelay);
             }

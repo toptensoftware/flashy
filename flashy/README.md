@@ -18,6 +18,7 @@ All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal.
 * **New V2** Host side .hex file parsing and re-chunking for packet size balancing and simpler
   device side implementation
 * **New V2** Includes packaged pre-compiled bootloader images
+* **New V2** Supports sending `.img` or `.hex` image files
 * Binary mode transfers (faster than sending .hex file as text)
 * Supports sending magic reboot strings
 * Supports serial port monitoring after flashing

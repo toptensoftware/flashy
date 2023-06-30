@@ -24,10 +24,10 @@ function showHelp()
     showVersion();
 
     console.log();
-    console.log(`Usage: flashy <serialport> [<hexfile>] [options]`);
+    console.log(`Usage: flashy <serialport> [<imagefile>] [options]`);
     console.log();
     console.log(`<serialport>               Serial port to write to`);
-    console.log(`<hexfile>                  The .hex file to write (optional)`);
+    console.log(`<imagefile>                The .hex or .img file to write (optional)`);
     console.log(`--flashBaud:<N>            Baud rate for flashing (default=1000000)`);
     console.log(`--userBaud:<N>             Baud rate for monitor and reboot magic (default=115200)`);
     console.log(`--reboot:<magic>           Sends a magic reboot string at user baud before flashing`);
@@ -48,7 +48,7 @@ function showHelp()
     console.log("                           (note: overwrites existing files without prompting)");
     console.log("--status                   Display device status info without flashing")
     console.log("--noVersionCheck           Don't check bootloader version on device")
-    console.log("--noKernelCheck            Don't check the hex filename matches expected kernel type for device");
+    console.log("--noKernelCheck            Don't check the image filename matches expected kernel type for device");
     console.log("--cwd:<dir>                Change current directory");
     console.log("--stress:<N>               Send data packets N times (for load testing)");
     console.log(`--monitor                  Monitor serial port`);
@@ -68,7 +68,8 @@ function fail(msg)
 function parseCommandLine()
 {
     let cl = {
-        hexFile: null,
+        imageFile: null,
+        isHexFile: null,
         serialPortName: null,
         flashBaud: 1000000,
         userBaud: 115200,
@@ -215,21 +216,28 @@ function parseCommandLine()
                 cl.serialPortName = arg;
                 continue;
             }
-            else if (cl.hexFile == null)
+
+            // Hex file?
+            if (arg.toLowerCase().endsWith('.hex'))
             {
-                // Second arg is the .hex file
-                cl.hexFile = arg;
-                
-                // Sanity check
-                if (!arg.toLowerCase().endsWith('.hex'))
-                {
-                    console.error(`Warning: hex file '${arg}' doesn't have .hex extension.`);
-                }
+                if (cl.imageFile)
+                    fail(`Too many command line args: '${arg}'`);
+                cl.imageFile = arg;
+                cl.isHexFile = true;
+                continue;
             }
-            else
+
+            // Image file?
+            if (arg.toLowerCase().endsWith('.img'))
             {
-                fail(`Too many command line args: '${arg}'`);
+                if (cl.imageFile)
+                    fail(`Too many command line args: '${arg}'`);
+                cl.imageFile = arg;
+                cl.isHexFile = false;
+                continue;
             }
+
+            fail(`Too many command line args: '${arg}'`);
         }
     }
 

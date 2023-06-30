@@ -13,11 +13,11 @@
             ],
             "type": "node",
             "args": [
-                "--help",
                 "COM3",
-                "blink/kernel7l.hex",
+                "blink/kernel8.img",
                 "--reboot:ccw_tada",
-                "--packetSize:4096"
+                "--noVersionCheck",
+                "--monitor",
             ],
             "console": "integratedTerminal"
         }
