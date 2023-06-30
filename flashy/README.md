@@ -2,7 +2,7 @@
 
 All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal.
 
-
+Flashy lets you upload and run kernel images to a Raspberry Pi via a serial port connection.
 
 ## Features
 
@@ -51,7 +51,11 @@ for all host to device transmissions.  It also offers several other improvements
 
         > flashy --bootloader:path_to_your_sd_card
 
-3. Use it! 
+3. Connect a serial port from your development PC to GPIO's 14/15 of the Raspberry Pi.  See [this guide](https://www.jeffgeerling.com/blog/2021/attaching-raspberry-pis-serial-console-uart-debugging) for details.
+
+    ![Wiring](https://www.jeffgeerling.com/sites/default/files/images/raspberry-pi-serial-cable-connection.png)
+
+4. Use it! 
 
         > flashy /dev/ttyS3 kernel.hex
 
