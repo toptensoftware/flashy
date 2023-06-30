@@ -97,7 +97,7 @@ $(HEXFILE): $(TARGET)
 aarch32:
 	$(Q)$(MAKE) PLATFORM=rpi1
 	$(Q)$(MAKE) PLATFORM=rpi2
-	$(Q)$(MAKE) PLATFORM=rpi3
+	#$(Q)$(MAKE) PLATFORM=rpi3
 	$(Q)$(MAKE) PLATFORM=rpi4
 
 # 64-bit targets
