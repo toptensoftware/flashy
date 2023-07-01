@@ -46,6 +46,7 @@ function showHelp()
     console.log("--bootloader[:<dir>]       Save the bootloader kernel images to directory <dir>");
     console.log("                           or the current directory if <dir> not specified.");
     console.log("                           (note: overwrites existing files without prompting)");
+    console.log("--printBootloaderPath      Prints to stdout the path to the bootloader images");
     console.log("--status                   Display device status info without flashing")
     console.log("--noVersionCheck           Don't check bootloader version on device")
     console.log("--noKernelCheck            Don't check the image filename matches expected kernel type for device");
@@ -86,6 +87,7 @@ function parseCommandLine()
         cpuBoost: "auto",
         serialLog: null,
         bootloader: null,
+        printBootloaderPath: false,
         stress: 1,
         status: false,
         checkVersion: true,
@@ -180,6 +182,10 @@ function parseCommandLine()
                     cl.bootloader = value || ".";
                     break;
 
+                case "printbootloaderpath":
+                    cl.printBootloaderPath = true;
+                    break;
+
                 case "cwd":
                     process.chdir(value);
                     break;
@@ -242,7 +248,7 @@ function parseCommandLine()
     }
 
     // Can't do anything without a serial port
-    if (!cl.serialPortName && !cl.bootloader)
+    if (!cl.serialPortName && !cl.bootloader && !cl.printBootloaderPath)
         fail(`No serial port specified`);
 
     return cl;

@@ -31,11 +31,6 @@
 
 .globl _start
 _start:
-#ifdef BOOTLOADER
-    b skip
-.space 0x200000-0x8004,0
-skip:
-#endif
     mov sp,#0x08000000
     bl start_main
 hang: b hang
@@ -80,13 +75,7 @@ dummy:
 
 .globl _start
 _start:
-#ifdef BOOTLOADER
-    b skip
-.space 0x280000-0x80004,0
-skip:
-#endif
-
-    mov sp,#0x08000000
+    mov sp, #0x08000000
     bl start_main
 hang: b hang
 

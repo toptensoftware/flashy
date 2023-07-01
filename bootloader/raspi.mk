@@ -1,40 +1,41 @@
-PLATFORM ?= rpi4
+PLATFORM ?= rpi1
 CONFIG ?= release
 
 # Crack platform
 ifeq ($(strip $(PLATFORM)),rpi1)
 RASPI=1
 AARCH=32
-TARGETNAME=kernel.img
+TARGETBASE=kernel
 ARCHFLAGS?=-mcpu=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=hard
 else ifeq ($(strip $(PLATFORM)),rpi2)
 RASPI=2
 AARCH=32
-TARGETNAME=kernel7.img
+TARGETBASE=kernel7
 ARCHFLAGS?=-mcpu=cortex-a7 -marm -mfpu=neon-vfpv4 -mfloat-abi=hard
 else ifeq ($(strip $(PLATFORM)),rpi3)
 RASPI=3
 AARCH=32
-TARGETNAME=kernel8-32.img
+TARGETBASE=kernel8-32
 ARCHFLAGS?=-mcpu=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard
 else ifeq ($(strip $(PLATFORM)),rpi4)
 RASPI=4
 AARCH=32
-TARGETNAME=kernel7l.img
+TARGETBASE=kernel7l
 ARCHFLAGS?=-mcpu=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard
 else ifeq ($(strip $(PLATFORM)),rpi3-64)
 RASPI=3
 AARCH=64
-TARGETNAME=kernel8.img
+TARGETBASE=kernel8
 ARCHFLAGS?=-mcpu=cortex-a53 -mlittle-endian
 else ifeq ($(strip $(PLATFORM)),rpi4-64)
 RASPI=4
 AARCH=64
-TARGETNAME=kernel8-rpi4.img
+TARGETBASE=kernel8-rpi4
 ARCHFLAGS?=-mcpu=cortex-a72 -mlittle-endian
 else
 $(error Unknown platform '$(PLATFORM)')
 endif
+TARGETNAME?=$(TARGETPREFIX)$(TARGETBASE)$(TARGETSUFFIX).img
 
 # Tool chain
 ifeq ($(OS),Windows_NT)
@@ -69,28 +70,29 @@ DEFINE += AARCH=$(AARCH) AARCH$(AARCH) RASPI=$(RASPI) RASPI$(RASPI)
 # Project Kind
 PROJKIND ?= custom
 HEXFILE = $(TARGET:%.img=%.hex)
+ELFFILE = $(TARGET:%.img=%.elf)
 LIBGCC	  := $(shell $(PREFIX)gcc $(ARCHFLAGS) -print-file-name=libgcc.a)
 EXTRALIBS += $(LIBGCC)
-ifeq ($(AARCH),32)
-LINKSCRIPT ?= link_script
-else
-LINKSCRIPT ?= link_script_64
-endif
+LINKSCRIPT ?= link_script_$(AARCH)
 
 # Main Rules
 TOOLCHAIN = gcc
 include ../Rules/Rules.mk
 
 # Link
-$(TARGET): $(PRECOMPILE_TARGETS) $(OBJS) $(LINKPROJECTLIBS)
+$(ELFFILE): $(PRECOMPILE_TARGETS) $(OBJS) $(LINKPROJECTLIBS)
 	@echo "  LD    $(notdir $@)"
-	$(Q)$(PREFIX)ld -o $@ $^ $(LIBS) $(GCC_LIBS) $(EXTRALIBS) --no-warn-rwx-segments -T $(LINKSCRIPT) -Map $(@:%.img=%.map) -o $(@:%.img=%.elf)
-	$(Q)$(PREFIX)objdump -D $(@:%.img=%.elf) > $(@:%.img=%.lst)
-	$(Q)$(PREFIX)objcopy $(@:%.img=%.elf) -O binary $@
+	$(Q)$(PREFIX)ld -o $@ $^ $(LIBS) $(GCC_LIBS) $(EXTRALIBS) --no-warn-rwx-segments -T $(LINKSCRIPT) -Map $(@:%.elf=%.map) -o $@
+	$(Q)$(PREFIX)objdump -D $@ > $(@:%.elf=%.lst)
 
-# Hex file
+# .img
+$(TARGET) : $(ELFFILE)
+	@echo "  COPY  $(notdir $@)"
+	$(Q)$(PREFIX)objcopy $< -O binary $@
+
+# .hex
 $(HEXFILE): $(TARGET)
-	@echo "  COPY  $(notdir $(HEXFILE))"
+	@echo "  COPY  $(notdir $@)"
 	$(Q)$(PREFIX)objcopy $(<:%.img=%.elf) -O ihex $@
 
 # 32-bit targets

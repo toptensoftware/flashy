@@ -1,7 +1,7 @@
 
 MEMORY
 {
-    ram : ORIGIN = 0x80000, LENGTH = 0x1000000
+    ram : ORIGIN = 0x07C00000, LENGTH = 0x100000
 }
 
 SECTIONS
@@ -12,6 +12,5 @@ SECTIONS
         *(.bss*) 
 		__bss_end = .;
     } > ram
-    .data : { *(.data*) } > ram
 }
 

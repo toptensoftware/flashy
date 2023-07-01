@@ -9,7 +9,6 @@ let os = require('os');
 let child_process = require('child_process');
 let path = require('path');
 let fs = require('fs');
-let decompress = require('decompress');
  
 let serial = require('./serial');
 let packetLayer = require('./packetLayer');
@@ -284,8 +283,33 @@ function checkPacketSize(ping)
     // Extract bootloader images
     if (cl.bootloader)
     {
-        await decompress(path.join(path.dirname(__filename), "bootloader.zip"), cl.bootloader)
-   }
+        try
+        {
+            let sourceDir = path.join(path.dirname(__filename), "bootloader_images") 
+            let entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+            for (let entry of entries)
+            {
+                let sourcePath = path.join(sourceDir, entry.name);
+                let destinationPath = path.join(cl.bootloader, entry.name);
+                if (!entry.isDirectory())
+                {
+                    console.log(`Copying to ${destinationPath}`);
+                    fs.copyFileSync(sourcePath, destinationPath);
+                }
+            };
+        }
+        catch (err)
+        {
+            console.log(err.message);
+            process.exit(7);
+        }
+    }
+
+    // Print the bootloader path
+    if (cl.printBootloaderPath)
+    {
+        process.stdout.write(path.join(path.dirname(__filename), "bootloader_images"));
+    }
 
    // Quit if nothing else to do
    if (!cl.serialPortName)

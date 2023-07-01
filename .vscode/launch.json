@@ -13,11 +13,7 @@
             ],
             "type": "node",
             "args": [
-                "COM3",
-                "blink/kernel7.img",
-                "--reboot:ccw_tada",
-                "--stress:5",
-                "--flashBaud:2000000",
+                "--bootloader"
             ],
             "console": "integratedTerminal"
         }

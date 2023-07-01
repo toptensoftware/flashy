@@ -12,5 +12,6 @@ SECTIONS
         *(.bss*) 
 		__bss_end = .;
     } > ram
+    .data : { *(.data*) } > ram
 }
 
