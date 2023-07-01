@@ -24,7 +24,7 @@ function showHelp()
     showVersion();
 
     console.log();
-    console.log(`Usage: flashy <serialport> [<imagefile>] [options]`);
+    console.log(`Usage: flashy [<serialport> [<imagefile>]] [options]`);
     console.log();
     console.log(`<serialport>               Serial port to write to`);
     console.log(`<imagefile>                The .hex or .img file to write (optional)`);

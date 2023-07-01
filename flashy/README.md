@@ -19,6 +19,7 @@ Flashy lets you upload and run kernel images to a Raspberry Pi via a serial port
 * **New V2** - Configurable packet size and timeout for flexibility with different devices
 * **New V2** - Host side .hex file parsing and re-chunking for packet size balancing and simpler
   device side implementation
+* **New V2** - Self relocating kernel images (about 10k instead of 2Mb)
 * Binary mode transfers (faster than sending .hex file as text)
 * Supports sending magic reboot strings
 * Supports serial port monitoring after flashing
@@ -86,6 +87,13 @@ flashy --bootloader:D:\
 
 Note: the `--bootloader` command will overwrite existing files and only includes the kernel image files - 
 you still need to setup the rest of the boot partition yourself, including `config.txt`.
+
+Alternatively you can use the `--printBootloaderPath` option to get the path to the packaged bootloader
+images and run your own commands to deploy them:
+
+```
+cp --no-clobber `flashy --printBootloaderPath`/*.img /mnt/sdcard
+```
 
 Next boot the device from the SD card and confirm it's running by looking for a heart beat pattern on the 
 activity LED. You can also confirm the serial connection with the `--status` command line option:
@@ -281,6 +289,8 @@ find itself in Windows and relaunch itself automatically.
 Currently there are no version checks between the two platforms - always make sure you've
 got the same version of Flashy installed on both Windows and the WSL machine.
 
+
+
 ## Supported Devices
 
 While Flashy should work on all Raspberry Pi models it's been tested on
@@ -299,11 +309,21 @@ All devices were tested at flash baud of 2M except the Pi 2 which required a
 slower rate of 1.5M baud. (the default flash rate is 1M).
 
 
+## Self Relocating Bootloader Kernel Images
+
+Previous versions of the bootloader kernel images included a 2Mb buffer to reserve room for the
+uploaded (aka flashed) image.  The made the kernel images unnecessarily large (over 2Mb each), 
+slower to load and limited flashed images to 2M.
+
+Flashy v2 has self relocating kernel images of less than 10Kb each. They load quickly and 
+allow for flashed images up to about 120Mb - which should be more than enough for even the largest projects.
+
+
 
 ## Command Line Options
 
 ```
-Usage: flashy <serialport> [<imagefile>] [options]
+Usage: flashy [<serialport> [<imagefile>]] [options]
 
 <serialport>               Serial port to write to
 <imagefile>                The .hex or .img file to write (optional)
@@ -320,11 +340,12 @@ Usage: flashy <serialport> [<imagefile>] [options]
 --serialLog:<file>         File to write low level log of serial comms
 --resetBaudTimeout:<N>     How long device should wait for packet before resetting
                            to the default baud and CPU frequent boost(default=500ms)
---cpuBoost:<yes|no|auto>   Whether to boost CPU clock frequency during uploads
+--cpuBoost:<yes|no|auto>   whether to boost CPU clock frequency during uploads
                               auto = yes if flash baud rate > 1M
 --bootloader[:<dir>]       Save the bootloader kernel images to directory <dir>
                            or the current directory if <dir> not specified.
                            (note: overwrites existing files without prompting)
+--printBootloaderPath      Prints to stdout the path to the bootloader images
 --status                   Display device status info without flashing
 --noVersionCheck           Don't check bootloader version on device
 --noKernelCheck            Don't check the image filename matches expected kernel type for device
