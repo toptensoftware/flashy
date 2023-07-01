@@ -223,28 +223,28 @@ function checkKernel(ping, filename)
     switch (ping.model.major)
     {
         case 1: 
-            allowedKernelNames.push('kernel'); 
+            allowedKernelNames.push('kernel.'); 
             break;
 
         case 2: 
-            allowedKernelNames.push('kernel7'); 
+            allowedKernelNames.push('kernel7.'); 
             break;
 
         case 3: 
             if (ping.aarch == 32)
             {
-                allowedKernelNames.push('kernel7'); 
-                allowedKernelNames.push('kernel8-32'); 
+                allowedKernelNames.push('kernel7.'); 
+                allowedKernelNames.push('kernel8-32.'); 
             }
             else
-                allowedKernelNames.push('kernel8');
+                allowedKernelNames.push('kernel8.');
             break;
 
         case 4: 
             if (ping.aarch == 32)
-                allowedKernelNames.push('kernel7l'); 
+                allowedKernelNames.push('kernel7l.'); 
             else 
-                allowedKernelNames.push('kernel8-rpi4');
+                allowedKernelNames.push('kernel8-rpi4.');
             break;
     }
 
@@ -258,7 +258,7 @@ function checkKernel(ping, filename)
     // Log and quit
     console.error("\nImage name mismatch");
     console.error(`    - image file: ${path.basename(filename)}`);
-    console.error(`    - expected: ${allowedKernelNames.map(x=> x + ".[img|hex]").join(" or ")} (for rpi${ping.raspi}-aarch${ping.aarch})`);
+    console.error(`    - expected: ${allowedKernelNames.map(x=> x + "[img|hex]").join(" or ")} (for rpi${ping.raspi}-aarch${ping.aarch})`);
     console.error("Aborting.  Use '--noVersionCheck' to override.\n");
     throw new FlashyError();
 }
