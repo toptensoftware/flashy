@@ -50,9 +50,10 @@ for all host to device transmissions.  It also offers several other improvements
 
         > flashy --bootloader:path_to_your_sd_card
 
-3. Connect a serial port from your development PC to GPIO's 14/15 of the Raspberry Pi.  See [this guide](https://www.jeffgeerling.com/blog/2021/attaching-raspberry-pis-serial-console-uart-debugging) for details.
+3. Connect a serial port from your development PC to GPIO's 14/15 of the Raspberry Pi.  See [this guide](https://www.jeffgeerling.com/blog/2021/attaching-raspberry-pis-serial-console-uart-debugging) for details. (Image used with permission, thanks Jeff)
 
     ![Wiring](https://www.jeffgeerling.com/sites/default/files/images/raspberry-pi-serial-cable-connection.png)
+
 
 4. Use it! 
 
