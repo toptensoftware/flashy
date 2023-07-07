@@ -11,16 +11,16 @@ const uint8_t terminator_byte = 0x55;
 
 
 // Encoder context
-struct encoder_context
+typedef struct 
 {
     void (*callback)(uint8_t data);
     uint32_t crc;
     uint8_t signal_bytes;
-};
+} encoder_context;
 
 // Helper to write a byte of data to output stream, inserting
 // stuffing bytes and calculating CRC
-static void write(struct encoder_context *pctx, uint8_t data)
+static void write(encoder_context *pctx, uint8_t data)
 {
     pctx->callback(data);
     crc32_update_1(&pctx->crc, data);
@@ -45,7 +45,7 @@ static void write(struct encoder_context *pctx, uint8_t data)
 }
 
 // Helper to variable length encode a value
-void write_varlen(struct encoder_context *pctx, uint32_t value, uint8_t bit)
+void write_varlen(encoder_context *pctx, uint32_t value, uint8_t bit)
 {
     if (value > 127)
     {
@@ -66,7 +66,7 @@ void packet_encode(void (*callback)(uint8_t data), uint32_t seq, uint32_t cmd, c
     callback(signal_byte);
 
     // Setup context
-    struct encoder_context ctx;
+    encoder_context ctx;
     ctx.callback = callback;
     crc32_start(&ctx.crc);
     ctx.signal_bytes = 0;
@@ -78,7 +78,7 @@ void packet_encode(void (*callback)(uint8_t data), uint32_t seq, uint32_t cmd, c
     write_varlen(&ctx, cbData, 0);
 
     // Write data
-    for (uint8_t i = 0; i < cbData; i++)
+    for (uint32_t i = 0; i < cbData; i++)
     {
         write(&ctx, ((uint8_t *)pData)[i]);
     }
@@ -110,7 +110,7 @@ enum decode_state
 
 
 // Decoder packets
-void packet_decode(struct decode_context* pctx, uint8_t data)
+void packet_decode(decode_context* pctx, uint8_t data)
 {
     // Monitoring for signal happens even while decoding packets
     // and if seen discards the current packet and starts a new one

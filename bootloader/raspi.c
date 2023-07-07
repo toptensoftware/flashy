@@ -121,6 +121,11 @@ uint32_t end_of_message_marker
 #define PROPTAG_END		            0x00000000
 
 // Clock IDs
+#if RASPI >= 4
+#define CLOCK_ID_EMMC		12			// EMMC2
+#else
+#define CLOCK_ID_EMMC		1
+#endif
 #define CLOCK_ID_UART       2
 #define CLOCK_ID_ARM        3
 #define CLOCK_ID_CORE		4
@@ -227,11 +232,9 @@ unsigned get_board_revision()
     return proptag[5];
 }
 
+// ------- Clocks -------
 
-
-// ------- CPU Freq -------
-
-static unsigned get_cpu_freq_tag(unsigned tag)
+unsigned get_clock_freq(uint32_t tag, uint32_t clock_id)
 {
 	unsigned proptag[] __attribute__((aligned(16))) =
 	{
@@ -241,7 +244,7 @@ static unsigned get_cpu_freq_tag(unsigned tag)
 		2*4,
 		1*4,
 
-		CLOCK_ID_ARM,
+		clock_id,
 		0,
 
 		PROPTAG_END
@@ -252,9 +255,14 @@ static unsigned get_cpu_freq_tag(unsigned tag)
 	return proptag[6];
 }
 
+
+// ------- CPU Freq -------
+
+
+
 unsigned get_cpu_freq()
 {
-    return get_cpu_freq_tag(PROPTAG_GET_CLOCK_RATE);
+    return get_clock_freq(PROPTAG_GET_CLOCK_RATE, CLOCK_ID_ARM);
 }
 
 void set_cpu_freq(uint32_t value)
@@ -280,18 +288,25 @@ void set_cpu_freq(uint32_t value)
 
 unsigned get_min_cpu_freq()
 {
-    return get_cpu_freq_tag(PROPTAG_GET_MIN_CLOCK_RATE);
+    return get_clock_freq(PROPTAG_GET_MIN_CLOCK_RATE, CLOCK_ID_ARM);
 }
 
 unsigned get_max_cpu_freq()
 {
-    return get_cpu_freq_tag(PROPTAG_GET_MAX_CLOCK_RATE);
+    return get_clock_freq(PROPTAG_GET_MAX_CLOCK_RATE, CLOCK_ID_ARM);
 }
 
 unsigned get_measured_cpu_freq()
 {
-    return get_cpu_freq_tag(PROPTAG_GET_CLOCK_RATE);
+    return get_clock_freq(PROPTAG_GET_CLOCK_RATE_MEASURED, CLOCK_ID_ARM);
 }
+
+uint32_t get_emmc_freq()
+{
+    return get_clock_freq(PROPTAG_GET_CLOCK_RATE, CLOCK_ID_EMMC);
+}
+
+
 
 
 // ------- GPIO -------
@@ -868,27 +883,39 @@ void uart_send_str(const char* psz)
 }
 
 
-
-// ------- STDLIB Infill -------
-
-
-void *memset(void *pBuffer, int nValue, size_t nLength)
+// Set some bits in a register
+void set_register_bits(uint32_t volatile* reg, uint32_t set, uint32_t mask)
 {
-    uint8_t* p =(uint8_t*)pBuffer;
-    uint8_t* pEnd = p + nLength;
-    while(p < pEnd)
-        *p++ =(uint8_t)nValue;
-    return pBuffer;
+    uint32_t r = *reg;
+    r &= ~mask;
+    r |= set;
+    *reg = r;
 }
 
-void *memcpy(void *pDest, const void *pSrc, size_t nLength)
-{
-    uint8_t* ps =(uint8_t*)pSrc;
-    uint8_t* pd =(uint8_t*)pDest;
-    uint8_t* pse = ps + nLength;
-    while(ps < pse)
-        *pd++ = *ps++;
-    return pDest;
 
+// Wait until one or more bits in a register are set
+bool wait_register_any_set(uint32_t volatile* reg, uint32_t mask, uint32_t timeout_millis)
+{
+    for (uint32_t i = 0; i<timeout_millis; i++)
+    {
+        if ((*reg & mask) != 0)
+            return true;
+        delay_micros(1000);
+    }
+    return false;
 }
+
+
+// Wait until all mask bits in a register are clear
+bool wait_register_all_clear(uint32_t volatile* reg, uint32_t mask, uint32_t timeout_millis)
+{
+    for (uint32_t i = 0; i<timeout_millis; i++)
+    {
+        if ((*reg & mask) == 0)
+            return true;
+        delay_micros(1000);
+    }
+    return false;
+}
+
 

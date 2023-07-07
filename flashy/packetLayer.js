@@ -3,9 +3,11 @@
 //
 // Handles sending and receiving encoded packets to/from device
 
+let fs = require('fs');
+let path = require('path');
+
 let packenc = require('./packetEncoder');
 let piModel = require('./piModel');
-let FlashyError = require('./FlashyError');
 
 
 // Packet ID's
@@ -15,7 +17,47 @@ const PACKET_ID_ERROR = 2;
 const PACKET_ID_DATA = 3;
 const PACKET_ID_GO = 4;
 const PACKET_ID_REQUEST_BAUD = 5;
-const PACKET_ID_READMEM = 6;
+
+
+// Check the bootloader version and this script's version number match
+function checkVersion(ping, warning)
+{
+    // Check version of flashy tool matches version of bootloader
+    let pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')), "utf8");
+    let verParts = pkg.version.split('.').map(x => Number(x));
+    if (verParts[0] != ping.verMajor || verParts[1] != ping.verMinor || verParts[2] != ping.verBuild)
+    {
+        console.error("\nBootloader version mismatch:")
+        console.error(`    - bootloader version: ${ping.verMajor}.${ping.verMinor}.${ping.verBuild}`);
+        console.error(`    - flashy version: ${pkg.version}`);
+        if (!warning)
+        {
+            let error = new Error(`Aborting. Use '--no-version-check' to override or the 'bootloader' command to get the latest images.`);
+            error.abort = true;
+            throw error;
+        }
+        else
+        {
+            console.error(`Use the 'bootloader' command to get the latest images.\n`);
+        }
+    }
+}
+
+// Check the user hasn't selected a packet size larger than
+// what the bootloader can support
+function checkPacketSize(ping, packet_size)
+{
+    if (packet_size > ping.maxPacketSize)
+    {
+        console.error(`\nPacket size too large:`);
+        console.error(`    - requested: ${packet_size}`);
+        console.error(`    - supported: ${ping.maxPacketSize}`);
+        let err = new Error("Aborting. Please choose a smaller packet size.");
+        err.abort = true;
+        throw err;
+    }
+}
+
 
 function layer(port, options)
 {
@@ -24,6 +66,7 @@ function layer(port, options)
         max_packet_size: 1024,
         packet_ack_timeout: 300,
         ping_attempts: 10,
+        check_version: true,
     }, options || {})
 
     // Callback to be invoked on receipt of ack packet
@@ -64,7 +107,7 @@ function layer(port, options)
     let encBuffer = Buffer.alloc(1024);
     let next_seq = 101;
 
-    async function send(port, cmd, buf)
+    async function send(cmd, buf)
     {
         // Allocate sequenct number
         let current_seq = next_seq++;
@@ -167,7 +210,7 @@ function layer(port, options)
             try
             {
                 // Send packet
-                let data = await send(port, PACKET_ID_PING, null);
+                let data = await send(PACKET_ID_PING, null);
         
                 // Decode response
                 let r = {
@@ -187,6 +230,7 @@ function layer(port, options)
                 r.model = piModel.piModelFromRevision(r.boardRevision);
                 process.stdout.write(" ok\n");
 
+                // Show device info
                 if (showDeviceInfo)
                 {
                     process.stdout.write(`Found device: \n`);
@@ -196,16 +240,23 @@ function layer(port, options)
                     process.stdout.write(`    - Bootloader: rpi${r.raspi}-aarch${r.aarch} v${r.verMajor}.${r.verMinor}.${r.verBuild}, max packet size: ${r.maxPacketSize}\n`);
                 }
 
+                // Do packet size check
+                checkPacketSize(r, options.max_packet_size)
+
+                // Do version checks
+                checkVersion(r, !options.check_version);
+
                 //process.stdout.write(`cpu_freq: current: ${r.cpu_freq/1000000}, measured:${r.measured_cpu_freq/1000000}, min: ${r.min_cpu_freq/1000000}, max: ${r.max_cpu_freq/1000000}\n`);
                 return r;
             }
             catch (err)
             {
-//                console.log(err.message);
+                if (err.abort)
+                    throw err;
             }
         }
 
-        throw new FlashyError(`Failed to ping device after ${options.ping_attempts} attempts.`)
+        throw new Error(`Failed to ping device after ${options.ping_attempts} attempts.`)
     }
 
     // Sends a request to device to switch baud rate and on success
@@ -222,16 +273,17 @@ function layer(port, options)
         packet.writeUInt32LE(baud, 0);
         packet.writeUInt32LE(reset_timeout_millis, 4);
         packet.writeUInt32LE(cpu_freq, 8);
-        await send(port, PACKET_ID_REQUEST_BAUD, packet);
+        await send(PACKET_ID_REQUEST_BAUD, packet);
         process.stdout.write(" ok\n");
     
         // Switch underlying serial transport
         await port.switchBaud(baud);
     }
 
+    // Send a data packet
     async function sendData(data)
     {
-        await send(port, PACKET_ID_DATA, data);
+        await send(PACKET_ID_DATA, data);
     }
 
     // switches the baud rate on the underlying serial connection
@@ -242,19 +294,9 @@ function layer(port, options)
         let packet = Buffer.alloc(8);
         packet.writeUInt32LE(startAddress, 0);
         packet.writeUInt32LE(delayMillis, 4);
-        await send(port, PACKET_ID_GO, packet);
+        await send( PACKET_ID_GO, packet);
 
         process.stdout.write(" ok\n");
-    }
-
-    async function readMem(address, length)
-    {
-        console.log(`Reading device memory at 0x${address} + ${length}bytes`);
-
-        let packet = Buffer.alloc(8);
-        packet.writeUInt32LE(address, 0);
-        packet.writeUInt32LE(length, 4);
-        await send(port, PACKET_ID_READMEM, packet);
     }
 
     // Return API
@@ -264,8 +306,8 @@ function layer(port, options)
         switchBaud,
         sendData,
         sendGo,
-        readMem,
         get options() { return options; },
+        get port() { return port; },
     }
 
 }

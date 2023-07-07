@@ -5,9 +5,6 @@
 
 let os = require('os');
 let fs = require('fs');
-
-let FlashyError = require('./FlashyError');
-
 let SerialPort;
 
 // Load the serial port module and display handy message if can't
@@ -93,7 +90,7 @@ function serialPort(serialPortName, options)
         port = new SerialPort(serialPortName, serialPortOptions, function(err) {
             if (err)
             {
-                throw new FlashyError(`Failed to open serial port: ${err.message}`);
+                throw new Error(`Failed to open serial port: ${err.message}`);
             }
         });
         log && log(` ok\n`);

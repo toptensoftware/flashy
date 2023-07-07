@@ -1,3 +1,5 @@
+PLATFORM ?= rpi2
+
 # Override ARCHFLAGS as CPU not setup for all instructions sets
 # Also define BOOTLOADER so vector.S inserts space for loaded program
 ARCHFLAGS=-DBOOTLOADER
@@ -10,6 +12,9 @@ FLASHY_VERSION := $(shell node -p "require('../flashy/package.json').version")
 COMMA := ,
 DEFINE += FLASHY_VERSION=$(subst .,$(COMMA),$(FLASHY_VERSION)),0
 TARGETSUFFIX=-himem
+
+SRCDIR = . ./ff15/source
+EXCLUDESRC += ./ff15/source/diskio.c ./ff15/source/ffsystem.c
 
 # Use hi-memory link script (save for aarch32 and 64)
 LINKSCRIPT = link_script_himem
@@ -33,3 +38,6 @@ $(OUTDIR)/$(TARGETBASE).img: $(TARGET) relocstub/reloc.S
 
 relocated_image: $(OUTDIR)/$(TARGETBASE).img
 
+
+flash: relocated_image
+	flashy COM3 $(OUTDIR)/$(TARGETBASE).img

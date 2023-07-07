@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #if RASPI == 1
 #define PBASE 0x20000000
@@ -33,12 +35,15 @@ unsigned get_core_clock();
 unsigned get_board_revision();
 uint64_t get_board_serial();
 
-// CPU freq
+// Clocks
+unsigned get_clock_freq(uint32_t tag, uint32_t clock_id);
 unsigned get_cpu_freq();
 void set_cpu_freq(uint32_t value);
 unsigned get_min_cpu_freq();
 unsigned get_max_cpu_freq();
 unsigned get_measured_cpu_freq();
+uint32_t get_emmc_freq();
+
 
 // GPIO
 #define GPIO_PIN_MODE_INPUT 0
@@ -91,3 +96,8 @@ void uart_send_hex4(int rc);
 void uart_send_hex8(int val);
 void uart_send_str(const char* psz);
 void uart_send_dec(unsigned int d);
+
+// Register bit manip/polling
+void set_register_bits(uint32_t volatile* reg, uint32_t set, uint32_t mask);
+bool wait_register_any_set(uint32_t volatile* reg, uint32_t mask, uint32_t timeout_millis);
+bool wait_register_all_clear(uint32_t volatile* reg, uint32_t mask, uint32_t timeout_millis);

@@ -22,7 +22,7 @@ enum packet_error
 };
 
 // Decoder context
-struct decode_context
+typedef struct
 {
     // These should be initialized to zero
     uint8_t state;
@@ -39,11 +39,11 @@ struct decode_context
     void (*onError)(int code);      // can be null if not interested
     uint8_t* pBuf;
     size_t cbBuf;
-};
+} decode_context;
 
-// Decode packet data (callback passed to constructor will be invoked with decoded packets).
+// Decode packet data
 // Invalid data and packets will be discarded
-void packet_decode(struct decode_context* pctx, uint8_t data);
+void packet_decode(decode_context* pctx, uint8_t data);
 
 #ifdef __cplusplus
 }

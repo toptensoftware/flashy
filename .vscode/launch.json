@@ -6,16 +6,17 @@
     "configurations": [
         {
             "name": "Launch Program",
-            "program": "${workspaceFolder}/flashy/flashy.js",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node",
+            "program": "${workspaceFolder}/flashy/flashy.js",
             "args": [
-                "--bootloader"
+                "ls", 
+                "COM3",
             ],
-            "console": "integratedTerminal"
+            "console": "externalTerminal"
         }
     ]
 }

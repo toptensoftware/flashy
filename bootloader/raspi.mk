@@ -1,4 +1,3 @@
-PLATFORM ?= rpi1
 CONFIG ?= release
 
 # Crack platform
