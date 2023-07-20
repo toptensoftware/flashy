@@ -58,10 +58,6 @@ let parser = commandLineParser.parser({
             name: "go",
             help: "Starts a previously flashed image"
         },
-        {
-            name: "ls",
-            help: "List directories and files on the device's SD card"
-        },
     ]
 });
 

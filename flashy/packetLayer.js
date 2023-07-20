@@ -289,7 +289,7 @@ function layer(port, options)
     // switches the baud rate on the underlying serial connection
     async function sendGo(startAddress, delayMillis)
     {
-        process.stdout.write(`Sending go command 0x${startAddress} with delay ${delayMillis}ms...`);
+        process.stdout.write(`Sending go command 0x${startAddress.toString(16)} with delay ${delayMillis}ms...`);
 
         let packet = Buffer.alloc(8);
         packet.writeUInt32LE(startAddress, 0);

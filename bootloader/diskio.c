@@ -1,8 +1,8 @@
 #include "raspi.h"
 #include "sdcard.h"
 
-#include "./ff15/source/ff.h"
-#include "./ff15/source/diskio.h"
+#include <ff.h>
+#include <diskio.h>
 
 // FatFS file system object
 FATFS g_fs;

@@ -46,7 +46,7 @@ void crc32_init()
 void crc32_start(uint32_t* pcrc)
 {
 	// Make sure initialised
-	crc32_init(false);
+	crc32_init();
 	*pcrc = 0xFFFFFFFF;
 }
 

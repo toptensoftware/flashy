@@ -13,8 +13,9 @@ COMMA := ,
 DEFINE += FLASHY_VERSION=$(subst .,$(COMMA),$(FLASHY_VERSION)),0
 TARGETSUFFIX=-himem
 
-SRCDIR = . ./ff15/source
-EXCLUDESRC += ./ff15/source/diskio.c ./ff15/source/ffsystem.c
+SRCDIR = . ./libFFsh/src ./libFFsh/ff15/source
+EXCLUDESRC += ./libFFsh/ff15/source/diskio.c ./libFFsh/ff15/source/ffsystem.c
+INCLUDEPATH += ./libFFsh/ff15/source
 
 # Use hi-memory link script (save for aarch32 and 64)
 LINKSCRIPT = link_script_himem

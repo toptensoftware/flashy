@@ -1,10 +1,12 @@
+#pragma once
+
 #include <stdbool.h>
 #include <string.h>
 #include "raspi.h"
 #include "packenc.h"
 #include "crc32.h"
 #include "diskio.h"
-#include "./ff15/source/ff.h"
+#include <ff.h>
 
 // Packed structure
 #define PACKED __attribute__((__packed__))
@@ -29,7 +31,9 @@ enum PACKET_ID
     PACKET_ID_DATA = 3,
     PACKET_ID_GO = 4,
     PACKET_ID_REQUEST_BAUD = 5,
-    PACKET_ID_READDIR = 6,
+    PACKET_ID_PULL = 6,
+    PACKET_ID_PUSH_DATA = 7,
+    PACKET_ID_PUSH_COMMIT = 8,
 };
 
 // Shared functions
@@ -41,4 +45,8 @@ void handle_ping(uint32_t seq, const void* p, uint32_t cb);
 void handle_data(uint32_t seq, const void* p, uint32_t cb);
 void handle_baud_request(uint32_t seq, const void* p, uint32_t cb);
 void handle_go(uint32_t seq, const void* p, uint32_t cb);
-void handle_readdir(uint32_t seq, const void* p, uint32_t cb);
+void handle_pull(uint32_t seq, const void* p, uint32_t cb);
+void reset_pull();
+void handle_push_data(uint32_t seq, const void* p, uint32_t cb);
+void handle_push_commit(uint32_t seq, const void* p, uint32_t cb);
+void reset_push();

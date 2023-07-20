@@ -78,8 +78,16 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cb)
             handle_baud_request(seq, p, cb);
             break;
 
-        case PACKET_ID_READDIR:
-            handle_readdir(seq, p, cb);
+        case PACKET_ID_PULL:
+            handle_pull(seq, p, cb);
+            break;
+
+        case PACKET_ID_PUSH_DATA:
+            handle_push_data(seq, p, cb);
+            break;
+
+        case PACKET_ID_PUSH_COMMIT:
+            handle_push_commit(seq, p, cb);
             break;
     }
 }
@@ -132,6 +140,10 @@ int main()
             
             // Reset CPU freq
             restore_cpu_freq();
+
+            // Reset other operations
+            reset_pull();
+            reset_push();
         }
 
 

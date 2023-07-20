@@ -1,3 +1,6 @@
 [submodule "Rules"]
 	path = Rules
 	url = git@github.com:toptensoftware/Rules
+[submodule "bootloader/libFFsh"]
+	path = bootloader/libFFsh
+	url = git@github.com:toptensoftware/libFFsh
