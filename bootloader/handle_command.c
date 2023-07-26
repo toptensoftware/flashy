@@ -2,7 +2,9 @@
 #include "common.h"
 #include "sdcard.h"
 #include "../lib/FFsh/FFsh/src/ffsh.h"
+#include <malloc.h>
 
+// From ceeelib
 void _vcbprintf(void (*write)(void*, char), void* arg, const char* format, va_list args);
 
 
@@ -78,7 +80,16 @@ void ffsh_sleep(uint32_t millis)
     delay_micros(millis * 1000);
 }
 
+void trace(const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	_vcbprintf(write_stderr, NULL, format, args);
+	va_end(args);
 
+    flush_stdio();
+    delay_micros(100000);
+}
 
 void handle_command(uint32_t seq, const void* p, uint32_t cb)
 {
@@ -98,6 +109,7 @@ void handle_command(uint32_t seq, const void* p, uint32_t cb)
 
     // Setup command context
     struct PROCESS proc;
+    process_init(&proc);
     process_set_cwd(&proc, cwd);
     process_set_stderr(&proc, NULL, write_stderr);
     process_set_stdout(&proc, NULL, write_stdout);

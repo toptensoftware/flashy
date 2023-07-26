@@ -29,7 +29,7 @@ $(OUTDIR)/$(TARGETBASE).img: $(TARGET) relocstub/reloc.S
 	$(Q)$(PREFIX)objcopy $(@:%.img=%.elf) -O binary $@
 	$(Q)cp $@ ../flashy/bootloader_images/
 
-relocated_image: $(OUTDIR)/$(TARGETBASE).img
+relocated_image: sub-projects $(OUTDIR)/$(TARGETBASE).img
 
 
 flash: relocated_image
