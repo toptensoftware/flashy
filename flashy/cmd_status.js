@@ -1,4 +1,3 @@
-let commandLineSpecs = require('./commandLineSpecs');
 
 async function run(ctx)
 {
@@ -25,7 +24,6 @@ async function run(ctx)
 module.exports = {
     synopsis: "Display device bootloader status",
     spec: [
-        ...commandLineSpecs.serial_port_specs,
         {
             name: "--reboot:<magic>|-r",
             help: "Send a magic reboot string before flashing",
@@ -36,8 +34,6 @@ module.exports = {
             help: "Baud rate sending reboot magic (default=115200)",
             default: 115200,
         },
-        ...commandLineSpecs.serial_port_packet_specs,
-        ...commandLineSpecs.common_specs,
     ],
     run,
 }

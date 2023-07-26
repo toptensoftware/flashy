@@ -15,6 +15,71 @@ let packetLayer = require('./packetLayer');
 let commandLineParser = require('./commandLineParser');
 let wslUtils = require('./wslUtils');
 
+// Args for all commands that use the serial port
+let serial_arg_specs = [
+    {
+        name: "--port:<portname>",
+        help: "Serial port of target device\n'--port:' prefix not required for COM* or /dev/tty*",
+        valuePattern: /^([Cc][Oo][Mm]\d+|\/dev\/tty.+)$/
+    },
+    {
+        name: "--packet-size:<n>",
+        help: "Size of data chunks transmitted (default=4096)",
+        default: 4096,
+    },
+    {
+        name: "--packet-timeout:<n>",
+        help: "Time out to receive packet ack in millis (default=300ms)",
+        default: 1000,
+    },
+    {
+        name: "--ping-timeout:<n>",
+        help: "Time out to receive ping ack in millis (default=300ms)",
+        default: 300,
+    },
+    {
+        name: "--ping-attempts:<n>",
+        help: "How many times to ping for device before giving up (default=20)",
+        default: 20,
+    },
+    {
+        name: "--serial-log:<file>",
+        default: null,
+        help: "File to write low level log of serial comms"
+    },
+    {
+        name: "--no-version-check",
+        help: "Don't check bootloader version on device",
+    },
+    {
+        name: "--flash-baud:<n>|-b",
+        help: "Baud rate for flashing (default=1000000)",
+        default: 1000000,
+    },
+    {
+        name: "--reset-timeout:<ms>",
+        help: "How long device should wait for packet before resetting "
+            + "to the default baud and CPU frequency (default=500ms)",
+        parse: commandLineParser.parse_integer,
+        default: 500,
+    },
+    {
+        name: "--cpu-boost:[yes|no|auto]",
+        help: "Whether to boost CPU clock frequency during uploads\n"
+            + "auto = yes if flash baud rate > 1M",
+        default: "auto",
+    },
+]
+
+// Args common to all commands
+let common_arg_specs = [
+    {
+        name: "--help",
+        help: "Show this help",
+        terminal: true,
+    },
+]
+
 
 // Base command line options
 let parser = commandLineParser.parser({
@@ -29,22 +94,8 @@ let parser = commandLineParser.parser({
             + "    https://github.com/dwelch67/raspberrypi\n",
     spec: [
         {
-            name: "--version",
-            help: "Show version info",
-            terminal: false,
-        },
-        {
-            name: "--help",
-            help: "Show this help",
-            terminal: false,
-        },
-        {
-            name: "--cwd:<dir>",
-            help: "Change current directory",
-        },
-        {
             name: "flash",
-            help: "Flash a kernel image to the device"
+            help: "Flash a kernel image to the device.  (default if no other command specified)"
         },
         {
             name: "bootloader",
@@ -58,12 +109,28 @@ let parser = commandLineParser.parser({
             name: "go",
             help: "Starts a previously flashed image"
         },
+        {
+            name: "exec",
+            help: "Executes a shell command on the target device",
+        },
+        ...serial_arg_specs,
+        ...common_arg_specs,
+        {
+            name: "--version",
+            help: "Show version info",
+            terminal: true,
+        },
+        {
+            name: "--cwd:<dir>",
+            help: "Change current directory",
+        },
     ]
 });
 
 // Parse command line
 let cl = parser.parse(process.argv.slice(2));
-parser.handle_help(cl);
+if (!cl.$command)
+    parser.handle_help(cl);
 
 // If no command specified, assume "flash"
 if (!cl.$command)
@@ -87,28 +154,32 @@ if (cl.cwd)
             usagePrefix: `flashy ${cl.$command}`,
             packageDir: __dirname,
             synopsis: command_handler.synopsis,
-            spec: command_handler.spec,
+            spec: [
+                ...command_handler.spec,
+                ...(command_handler.usesSerialPort !== false ? serial_arg_specs : []), 
+                ...common_arg_specs
+            ],
         });
-        let command_cl = command_parser.parse(cl.$tail);
+        let command_cl = Object.assign(cl, command_parser.parse(cl.$tail));
         command_parser.handle_help(command_cl);
         command_parser.check(command_cl);
 
         // Merge base options and command options
-        ctx.cl = Object.assign(cl, command_cl);
+        ctx.cl = command_cl;
         delete ctx.cl.$tail;
 
         // If running under WSL2 and trying to use a regular serial port
         // relaunch self as a Windows process
-        if (wslUtils.isWsl2() && cl.serialport && cl.serialport.startsWith("/dev/ttyS"))
+        if (wslUtils.isWsl2() && cl.port && cl.port.startsWith("/dev/ttyS"))
         {
             process.exit(wslUtils.runSelfUnderWindows());
         }
         
         // Open serial port if needed 
-        if (cl.serialport)
+        if (cl.port)
         {
             // Setup serial port
-            ctx.port = serial(cl.serialport, {
+            ctx.port = serial(cl.port, {
                 baudRate: 0,  // delay open until first baud rate switch
                 log: (msg) => process.stdout.write(msg),
                 logFilename: cl.serialLog,
@@ -121,6 +192,7 @@ if (cl.cwd)
                 let packetLayerOptions = {
                     max_packet_size: Math.max(128, cl.packetSize),
                     packet_ack_timeout: cl.packetTimeout,
+                    ping_ack_timeout: cl.pingTimeout,
                     ping_attempts: cl.pingAttempts,
                     check_version: !cl.noVersionCheck,
                 };

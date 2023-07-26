@@ -8,10 +8,16 @@
 
 #include "raspi.h"
 
+#include "../lib/ceelib/ceelib/heap.h"
+
+struct HEAP ceelib_malloc_heap = { 0 };
+
 
 // ------- Startup -------
 
 extern int main();
+
+
 
 int start_main()
 {
@@ -19,6 +25,8 @@ int start_main()
     extern unsigned char __bss_start;
 	extern unsigned char __bss_end;
 	memset(&__bss_start, 0, &__bss_end - &__bss_start);
+
+    heap_init(&ceelib_malloc_heap, (void*)0x08000000, 0x08000000);
 
     // Call the real main
     return main();

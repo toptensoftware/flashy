@@ -447,6 +447,7 @@ function parse(args, options)
     let positional_specs = spec.filter(x => x.type == "positional");
     let command_specs = spec.filter(x => x.type == "command");
     let named_specs = spec.filter(x => x.type == "named" || x.type == "switch");
+    let pattern_specs = spec.filter(x => x.valuePattern !== undefined);
 
     // Process args
     let position = 0;
@@ -503,29 +504,41 @@ function parse(args, options)
         }
         else
         {
-            // Look for matching command
-            cmd_spec = command_specs.find(x => x.name == arg);
-            if (cmd_spec)
+            // Look for named spec with value pattern
+            let pattern_spec = pattern_specs.find(x => arg.match(x.valuePattern));
+            if (pattern_spec)
             {
-                // It's a command
-                result.$command = cmd_spec.name;
-                result.$tail = args.slice(i+1);
-                return result;
+                arg_spec = pattern_spec;
+                arg_value = arg;
             }
             else
             {
-                // It's a positional value
-
-                // Too many?
-                if (position >= positional_specs.length)
+                // Look for matching command
+                let cmd_spec = command_specs.find(x => x.name == arg);
+                if (cmd_spec)
                 {
-                    result.$tail = args.slice(i);
+                    // It's a command
+                    result.$command = cmd_spec.name;
+                    result.$tail = args.slice(i+1);
                     return result;
                 }
+                else
+                {
+                    // It's a positional value
     
-                // Use next positional arg
-                arg_spec = positional_specs[position++];
-                arg_value = arg;
+                    // Too many?
+                    if (position >= positional_specs.length)
+                    {
+                        result.$tail = args.slice(i);
+                        return result;
+                    }
+        
+                    // Use next positional arg
+                    arg_spec = positional_specs[position];
+                    if (!arg_spec.multiValue)
+                        position++;
+                    arg_value = arg;
+                }
             }
         }
 

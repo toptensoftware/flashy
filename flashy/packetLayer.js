@@ -8,6 +8,7 @@ let path = require('path');
 
 let packenc = require('./packetEncoder');
 let piModel = require('./piModel');
+let RestartableTimeout = require('./restartableTimeout');
 
 
 // Packet ID's
@@ -17,6 +18,13 @@ const PACKET_ID_ERROR = 2;
 const PACKET_ID_DATA = 3;
 const PACKET_ID_GO = 4;
 const PACKET_ID_REQUEST_BAUD = 5;
+const PACKET_ID_PULL = 6;
+const PACKET_ID_PUSH_DATA = 7;
+const PACKET_ID_PUSH_COMMIT = 8;
+const PACKET_ID_COMMAND = 9;
+const PACKET_ID_STDOUT = 10;
+const PACKET_ID_STDERR = 11;
+
 
 
 // Check the bootloader version and this script's version number match
@@ -64,17 +72,24 @@ function layer(port, options)
     // Apply default options
     options = Object.assign({
         max_packet_size: 1024,
-        packet_ack_timeout: 300,
+        packet_ack_timeout: 1000,
+        ping_ack_timeout: 300,
         ping_attempts: 10,
         check_version: true,
     }, options || {})
 
     // Callback to be invoked on receipt of ack packet
     let ack_notify = null;
+
+    // Timer, restarted on each packet received
+    let timeout = null;
     
     // Receive packets
     function onPacket(seq, cmd, data)
     {
+        if (timeout)
+            timeout.restart();
+
         switch (cmd)
         {
             case PACKET_ID_PING:
@@ -89,6 +104,14 @@ function layer(port, options)
 
             case PACKET_ID_ERROR:
                 console.error(`\nDevice packet error: ${data.readInt32LE(0)}`);
+                break;
+
+            case PACKET_ID_STDERR:
+                process.stderr.write(data);
+                break;
+        
+            case PACKET_ID_STDOUT:
+                process.stdout.write(data);
                 break;
 
             default:
@@ -113,7 +136,6 @@ function layer(port, options)
         let current_seq = next_seq++;
 
         // Time out
-        let timeout = null;
         let promise_reject = null;
         let isResolved = false;
 
@@ -164,10 +186,10 @@ function layer(port, options)
             if (!isResolved)
             {
                 // Install timeout
-                timeout = setTimeout(() => {
+                timeout = new RestartableTimeout(() => {
                     timeout = null;
                     promise_reject(new Error("timeout awaiting ack response"));
-                }, options.packet_ack_timeout);
+                }, cmd == PACKET_ID_PING ? options.ping_ack_timeout : options.packet_ack_timeout);
             }
         
             // Wait for ack or timeout
@@ -178,7 +200,7 @@ function layer(port, options)
             ack_notify = null;
             if (timeout)
             {
-                clearTimeout(timeout);
+                timeout.cancel();
             }
         }
     }
@@ -294,9 +316,26 @@ function layer(port, options)
         let packet = Buffer.alloc(8);
         packet.writeUInt32LE(startAddress, 0);
         packet.writeUInt32LE(delayMillis, 4);
-        await send( PACKET_ID_GO, packet);
+        await send(PACKET_ID_GO, packet);
 
         process.stdout.write(" ok\n");
+    }
+
+    async function sendCommand(cwd, cmd)
+    {
+        process.stdout.write(`Sending command ${cwd}> ${cmd}...\n`);
+
+        // Format packet
+        let buf_cwd = Buffer.from(cwd + "\0", 'utf8');
+        let buf_cmd = Buffer.from(cmd + '\0', 'utf8');
+        let packet = Buffer.concat([buf_cwd, buf_cmd]);
+
+        // Send it
+        let r = await send(PACKET_ID_COMMAND, packet);
+
+        // Done
+        process.stdout.write(" ok\n");
+        return r;
     }
 
     // Return API
@@ -306,6 +345,7 @@ function layer(port, options)
         switchBaud,
         sendData,
         sendGo,
+        sendCommand,
         get options() { return options; },
         get port() { return port; },
     }

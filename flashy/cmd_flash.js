@@ -1,7 +1,6 @@
 let path = require('path');
 
 let commandLineParser = require('./commandLineParser');
-let commandLineSpecs = require('./commandLineSpecs');
 let intelHex = require('./intelHex');
 
 // Send a hex file to device
@@ -294,10 +293,10 @@ async function run(ctx)
 module.exports = {
     synopsis: "Flashes a kernel image to the target device",
     spec: [
-        ...commandLineSpecs.serial_port_specs,
         {
-            name: "<imagefile>",
-            help: "The .hex or .img file to write",
+            name: "--imagefile:<file>|-i",
+            help: "The .hex or .img file to write\n'--imagefile:' prefix not required for *.img or *.hex",
+            valuePattern: /\.(hex|img)$/,
             parse: (arg) => {
                 if (arg.toLowerCase().endsWith('.hex'))
                     return { filename: arg, kind: "hex" }
@@ -340,9 +339,6 @@ module.exports = {
             help: "Send data packets N times (for load testing)",
             default: 1,
         },
-        ...commandLineSpecs.serial_port_load_specs,
-        ...commandLineSpecs.serial_port_packet_specs,
-        ...commandLineSpecs.common_specs,
     ],
     run,
 }

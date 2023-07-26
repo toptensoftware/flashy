@@ -1,8 +1,6 @@
 let path = require('path');
 let fs = require('fs');
 
-let commandLineSpecs = require('./commandLineSpecs');
-
 async function run(ctx)
 {
     let cl = ctx.cl;
@@ -43,7 +41,7 @@ module.exports = {
             name: "--print",
             help: "Prints the path to the bootloader images instead of extracting them."
         },
-        ...commandLineSpecs.common_specs,
     ],
+    usesSerialPort: false,
     run,
 }

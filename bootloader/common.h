@@ -34,6 +34,9 @@ enum PACKET_ID
     PACKET_ID_PULL = 6,
     PACKET_ID_PUSH_DATA = 7,
     PACKET_ID_PUSH_COMMIT = 8,
+    PACKET_ID_COMMAND = 9,
+    PACKET_ID_STDOUT = 10,
+    PACKET_ID_STDERR = 11,
 };
 
 // Shared functions
@@ -50,3 +53,4 @@ void reset_pull();
 void handle_push_data(uint32_t seq, const void* p, uint32_t cb);
 void handle_push_commit(uint32_t seq, const void* p, uint32_t cb);
 void reset_push();
+void handle_command(uint32_t seq, const void* p, uint32_t cb);

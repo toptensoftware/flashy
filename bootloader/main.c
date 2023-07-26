@@ -89,6 +89,10 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cb)
         case PACKET_ID_PUSH_COMMIT:
             handle_push_commit(seq, p, cb);
             break;
+
+        case PACKET_ID_COMMAND:
+            handle_command(seq, p, cb);
+            break;
     }
 }
 

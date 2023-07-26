@@ -1,6 +1,9 @@
 [submodule "Rules"]
 	path = Rules
 	url = git@github.com:toptensoftware/Rules
-[submodule "bootloader/libFFsh"]
-	path = bootloader/libFFsh
+[submodule "lib/ceelib/ceelib"]
+	path = lib/ceelib/ceelib
+	url = git@github.com:toptensoftware/ceelib
+[submodule "lib/FFsh/FFsh"]
+	path = lib/FFsh/FFsh
 	url = git@github.com:toptensoftware/libFFsh

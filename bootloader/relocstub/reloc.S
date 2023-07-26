@@ -30,7 +30,8 @@ _start:
     mov x0,#load_address                    // pDest 
     adrp x1,kernel_image
     add x1,x1,#kernel_image
-    mov x4,#kernel_image_end-kernel_image   // count
+    movz x4,#(kernel_image_end-kernel_image) & 0xFFFF   // count
+    movk x4,#(kernel_image_end-kernel_image) >> 16, lsl #16
     mov	x2, #0x0                   	        // offset
 memcpy_1:
     ldr	x3, [x1, x2]

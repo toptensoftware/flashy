@@ -13,8 +13,9 @@
             "type": "node",
             "program": "${workspaceFolder}/flashy/flashy.js",
             "args": [
-                "ls", 
                 "COM3",
+                "exec", 
+                "ls -al",
             ],
             "console": "externalTerminal"
         }

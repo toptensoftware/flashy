@@ -4,37 +4,37 @@ CONFIG ?= release
 ifeq ($(strip $(PLATFORM)),rpi1)
 RASPI=1
 AARCH=32
-TARGETBASE=kernel
+KERNELNAME=kernel
 ARCHFLAGS?=-mcpu=arm1176jzf-s -marm -mfpu=vfp -mfloat-abi=hard
 else ifeq ($(strip $(PLATFORM)),rpi2)
 RASPI=2
 AARCH=32
-TARGETBASE=kernel7
+KERNELNAME=kernel7
 ARCHFLAGS?=-mcpu=cortex-a7 -marm -mfpu=neon-vfpv4 -mfloat-abi=hard
 else ifeq ($(strip $(PLATFORM)),rpi3)
 RASPI=3
 AARCH=32
-TARGETBASE=kernel8-32
+KERNELNAME=kernel8-32
 ARCHFLAGS?=-mcpu=cortex-a53 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard
 else ifeq ($(strip $(PLATFORM)),rpi4)
 RASPI=4
 AARCH=32
-TARGETBASE=kernel7l
+KERNELNAME=kernel7l
 ARCHFLAGS?=-mcpu=cortex-a72 -marm -mfpu=neon-fp-armv8 -mfloat-abi=hard
 else ifeq ($(strip $(PLATFORM)),rpi3-64)
 RASPI=3
 AARCH=64
-TARGETBASE=kernel8
+KERNELNAME=kernel8
 ARCHFLAGS?=-mcpu=cortex-a53 -mlittle-endian
 else ifeq ($(strip $(PLATFORM)),rpi4-64)
 RASPI=4
 AARCH=64
-TARGETBASE=kernel8-rpi4
+KERNELNAME=kernel8-rpi4
 ARCHFLAGS?=-mcpu=cortex-a72 -mlittle-endian
 else
 $(error Unknown platform '$(PLATFORM)')
 endif
-TARGETNAME?=$(TARGETPREFIX)$(TARGETBASE)$(TARGETSUFFIX).img
+
 
 # Tool chain
 ifeq ($(OS),Windows_NT)
@@ -74,12 +74,20 @@ LIBGCC	  := $(shell $(PREFIX)gcc $(ARCHFLAGS) -print-file-name=libgcc.a)
 EXTRALIBS += $(LIBGCC)
 LINKSCRIPT ?= link_script_$(AARCH)
 
+ifeq ($(strip $(PROJKIND)),custom)
+TARGETBASE?=$(KERNELNAME)
+TARGETNAME?=$(TARGETPREFIX)$(TARGETBASE)$(TARGETSUFFIX).img
+endif
+
 # Main Rules
 TOOLCHAIN = gcc
-include ../Rules/Rules.mk
+RULESHOME ?= ../Rules
+include $(RULESHOME)/Rules.mk
+
+ifeq ($(strip $(PROJKIND)),custom)
 
 # Link
-$(ELFFILE): $(PRECOMPILE_TARGETS) $(OBJS) $(LINKPROJECTLIBS)
+$(ELFFILE): $(PRECOMPILE_TARGETS) $(OBJS) $(LINKPROJECTLIBS) 
 	@echo "  LD    $(notdir $@)"
 	$(Q)$(PREFIX)ld -o $@ $^ $(LIBS) $(GCC_LIBS) $(EXTRALIBS) --no-warn-rwx-segments -T $(LINKSCRIPT) -Map $(@:%.elf=%.map) -o $@
 	$(Q)$(PREFIX)objdump -D $@ > $(@:%.elf=%.lst)
@@ -113,3 +121,4 @@ aarch: aarch32 aarch64
 cleanall:
 	@rm -rf bin
 
+endif
