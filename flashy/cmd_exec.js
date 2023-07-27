@@ -15,7 +15,7 @@ async function run(ctx)
     await ctx.port.switchBaud(115200);
 
     // Wait for device
-    await ctx.layer.ping(true);
+    await ctx.layer.ping(ctx.cl.verbose);
 
     // Send command
     let r = lib.decode("command_ack", await ctx.layer.sendCommand(ctx.cl.cwd, ctx.cl.cmd));

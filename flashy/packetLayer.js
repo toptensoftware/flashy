@@ -78,6 +78,9 @@ function layer(port, options)
         check_version: true,
     }, options || {})
 
+    // Get log to local var
+    let log = options.log;
+
     // Callback to be invoked on receipt of ack packet
     let ack_notify = null;
 
@@ -188,7 +191,7 @@ function layer(port, options)
                 // Install timeout
                 timeout = new RestartableTimeout(() => {
                     timeout = null;
-                    promise_reject(new Error("timeout awaiting ack response"));
+                    promise_reject(new Error("timeout awaiting response"));
                 }, cmd == PACKET_ID_PING ? options.ping_ack_timeout : options.packet_ack_timeout);
             }
         
@@ -224,11 +227,11 @@ function layer(port, options)
     // Ping the device and return info from response
     async function ping(showDeviceInfo)
     {
-        process.stdout.write(`Waiting for device..`);
+        log && log(`Waiting for device..`);
 
         for (let i=0; i<options.ping_attempts; i++)
         {
-            process.stdout.write('.');
+            log && log('.');
             try
             {
                 // Send packet
@@ -250,7 +253,7 @@ function layer(port, options)
                     max_cpu_freq: data.readUInt32LE(36),
                 }
                 r.model = piModel.piModelFromRevision(r.boardRevision);
-                process.stdout.write(" ok\n");
+                log && log(" ok\n");
 
                 // Show device info
                 if (showDeviceInfo)
@@ -268,7 +271,6 @@ function layer(port, options)
                 // Do version checks
                 checkVersion(r, !options.check_version);
 
-                //process.stdout.write(`cpu_freq: current: ${r.cpu_freq/1000000}, measured:${r.measured_cpu_freq/1000000}, min: ${r.min_cpu_freq/1000000}, max: ${r.max_cpu_freq/1000000}\n`);
                 return r;
             }
             catch (err)
@@ -285,18 +287,21 @@ function layer(port, options)
     // switches the baud rate on the underlying serial connection
     async function switchBaud(baud, reset_timeout_millis, cpu_freq)
     {
-        process.stdout.write(`Sending request for ${baud.toLocaleString()} baud`);
-        if (cpu_freq) 
-            process.stdout.write(` and ${(cpu_freq/1000000).toLocaleString()}MHz CPU...`);
-        else
-            process.stdout.write("...");
+        if (log)
+        {
+            log(`Sending request for ${baud.toLocaleString()} baud`);
+            if (cpu_freq) 
+                log(` and ${(cpu_freq/1000000).toLocaleString()}MHz CPU...`);
+            else
+                log("...");
+        }
 
         let packet = Buffer.alloc(12);
         packet.writeUInt32LE(baud, 0);
         packet.writeUInt32LE(reset_timeout_millis, 4);
         packet.writeUInt32LE(cpu_freq, 8);
         await send(PACKET_ID_REQUEST_BAUD, packet);
-        process.stdout.write(" ok\n");
+        log && log(" ok\n");
     
         // Switch underlying serial transport
         await port.switchBaud(baud);
@@ -311,19 +316,19 @@ function layer(port, options)
     // switches the baud rate on the underlying serial connection
     async function sendGo(startAddress, delayMillis)
     {
-        process.stdout.write(`Sending go command 0x${startAddress.toString(16)} with delay ${delayMillis}ms...`);
+        log && log(`Sending go command 0x${startAddress.toString(16)} with delay ${delayMillis}ms...`);
 
         let packet = Buffer.alloc(8);
         packet.writeUInt32LE(startAddress, 0);
         packet.writeUInt32LE(delayMillis, 4);
         await send(PACKET_ID_GO, packet);
 
-        process.stdout.write(" ok\n");
+        log && log(" ok\n");
     }
 
     async function sendCommand(cwd, cmd)
     {
-        process.stdout.write(`Sending command ${cwd}> ${cmd}...\n`);
+        log && log(`Sending command ${cwd}> ${cmd}...\n`);
 
         // Format packet
         let buf_cwd = Buffer.from(cwd + "\0", 'utf8');
@@ -334,7 +339,7 @@ function layer(port, options)
         let r = await send(PACKET_ID_COMMAND, packet);
 
         // Done
-        process.stdout.write(" ok\n");
+        log && log(" ok\n");
         return r;
     }
 

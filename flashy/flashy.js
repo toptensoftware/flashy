@@ -69,6 +69,11 @@ let serial_arg_specs = [
             + "auto = yes if flash baud rate > 1M",
         default: "auto",
     },
+    {
+        name: "--verbose|-v",
+        help: "Display additional informational messages",
+        default: false,
+    }
 ]
 
 // Args common to all commands
@@ -181,7 +186,7 @@ if (cl.cwd)
             // Setup serial port
             ctx.port = serial(cl.port, {
                 baudRate: 0,  // delay open until first baud rate switch
-                log: (msg) => process.stdout.write(msg),
+                log: ctx.cl.verbose ? (msg) => process.stdout.write(msg) : null,
                 logFilename: cl.serialLog,
             });
             await ctx.port.open();
@@ -195,6 +200,7 @@ if (cl.cwd)
                     ping_ack_timeout: cl.pingTimeout,
                     ping_attempts: cl.pingAttempts,
                     check_version: !cl.noVersionCheck,
+                    log: ctx.cl.verbose ? (msg) => process.stdout.write(msg) : null,
                 };
                 ctx.layer = packetLayer(ctx.port, packetLayerOptions);
             }

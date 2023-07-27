@@ -1,4 +1,5 @@
 let path = require('path');
+let fs = require('fs');
 
 let commandLineParser = require('./commandLineParser');
 let intelHex = require('./intelHex');
