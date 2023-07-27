@@ -17,6 +17,7 @@ typedef struct PACKED
 static uint32_t stdio_seq;
 static uint32_t stdio_buffer_used;
 static bool stdio_buffer_is_stdout;
+static uint32_t last_flush;
 
 void flush_stdio()
 {
@@ -24,8 +25,31 @@ void flush_stdio()
     {
         sendPacket(stdio_seq, stdio_buffer_is_stdout ? PACKET_ID_STDOUT : PACKET_ID_STDERR, response_buf, stdio_buffer_used);
         stdio_buffer_used = 0;
+        last_flush = millis();
     }
 }
+
+void send_progress_pings()
+{
+    // If anything in stdio output, flush it
+    if (stdio_buffer_used)
+    {
+        flush_stdio();
+        return;
+    }
+
+    // If nothing to send, but it's been more than half as second
+    // since anything was sent then send an empty STDOUT packet
+    // to notify host we're still alive
+    if (millis() - last_flush > 500)
+    {
+        sendPacket(stdio_seq, PACKET_ID_STDOUT, NULL, 0);
+        last_flush = millis();
+    }
+}
+
+
+
 
 void write_stderr(void* user, char ch)
 {
@@ -75,9 +99,13 @@ void ffsh_printf(void (*write)(void*, char), void* arg, const char* format, ...)
 	va_end(args);
 }
 
-void ffsh_sleep(uint32_t millis)
+void ffsh_sleep(uint32_t ms)
 {
-    delay_micros(millis * 1000);
+    unsigned int start = millis();
+    while(millis() - start < ms)
+    {
+        send_progress_pings();
+    }
 }
 
 void trace(const char* format, ...)
@@ -88,11 +116,15 @@ void trace(const char* format, ...)
 	va_end(args);
 
     flush_stdio();
-    delay_micros(100000);
+    delay_millis(100);
 }
 
 void handle_command(uint32_t seq, const void* p, uint32_t cb)
 {
+    // Reset last flush time
+    last_flush = millis();
+
+    // Make sure SD card mounted
     mount_sdcard();
 
     // Copy cwd to modifyable working buffer
@@ -113,6 +145,7 @@ void handle_command(uint32_t seq, const void* p, uint32_t cb)
     process_set_cwd(&proc, cwd);
     process_set_stderr(&proc, NULL, write_stderr);
     process_set_stdout(&proc, NULL, write_stdout);
+    process_set_progress(&proc, send_progress_pings);
 
     // Execut command
     int exitcode = process_shell(&proc, pszCommand);

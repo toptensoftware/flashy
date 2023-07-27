@@ -23,11 +23,11 @@ void handle_go(uint32_t seq, const void* p, uint32_t cb)
 
     // Flush
     uart_flush();
-    delay_micros(10000);
+    delay_millis(10);
 
     // User delay before starting?
     if (pGo->delayMillis)
-        delay_micros(pGo->delayMillis * 1000);
+        delay_millis(pGo->delayMillis);
 
     // Use default start address?
     if (pGo->startAddress == 0xFFFFFFFF)

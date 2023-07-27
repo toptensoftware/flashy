@@ -62,18 +62,30 @@ unsigned int ticks()
 #define ARM_SYSTIMER_C3		(ARM_SYSTIMER_BASE + 0x18)
 
 
-unsigned int micros()
+uint64_t micros()
 {
-    return GET32(ARM_SYSTIMER_CLO);
+    uint32_t lo = GET32(ARM_SYSTIMER_CLO);
+    uint32_t hi = GET32(ARM_SYSTIMER_CHI);
+    return ((uint64_t)hi << 32) | lo;
 }
 
 
-void delay_micros(unsigned int period)
+void delay_micros(uint64_t period)
 {
-    unsigned int start = micros();
-    while(micros() - start < period)
+    uint64_t start = micros();
+    while (micros() - start < period)
     {
     }
+}
+
+uint32_t millis()
+{
+    return (uint32_t)(micros() / 1000);
+}
+
+void delay_millis(uint32_t millis)
+{
+    delay_micros(((uint64_t)millis) * 1000);
 }
 
 

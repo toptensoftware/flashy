@@ -26,8 +26,11 @@ extern void dummy(unsigned int);
 void timer_init();
 unsigned int ticks();
 
-unsigned int micros();
-void delay_micros(unsigned int period);
+uint64_t micros();
+void delay_micros(uint64_t period);
+
+uint32_t millis();
+void delay_millis(uint32_t millis);
 
 // Mailbox
 unsigned mbox_writeread(unsigned nData);

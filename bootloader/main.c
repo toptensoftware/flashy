@@ -11,7 +11,7 @@ uint8_t response_buf[max_packet_size];
 unsigned current_baud = default_baud;
 
 // Last packet received time
-unsigned last_received_packet_time = 0;
+unsigned last_received_packet_time_ms = 0;
 
 // How long to wait on non-default baud rate with no
 // received packets before resetting to the default baud rate
@@ -56,7 +56,7 @@ void sendPacket(uint32_t seq, uint32_t id, const void* pData, uint32_t cbData)
 void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cb)
 {
     // Store packet time
-    last_received_packet_time = micros();
+    last_received_packet_time_ms = millis();
 
     // Dispatch by id
     switch (id)
@@ -129,11 +129,11 @@ int main()
         while ((recv_byte = uart_try_recv()) >= 0)
             packet_decode(&ctx, recv_byte);
 
-        unsigned tick = micros();
+        uint32_t tick_ms = millis();
 
         // If no packets received for reset timeout period, then reset
         if (reset_timeout_millis != 0 && 
-            tick - last_received_packet_time > (reset_timeout_millis * 1000))
+            tick_ms - last_received_packet_time_ms > reset_timeout_millis)
         {
             // Reset baud rate
             if (current_baud != default_baud)
@@ -153,10 +153,10 @@ int main()
 
         // When in default baud mode and it's been more than half a second since
         // received a packet, flash the alive heart beat
-        if (current_baud == default_baud && tick - last_received_packet_time > 500000)
+        if (current_baud == default_baud && tick_ms - last_received_packet_time_ms > 500)
         {
             const unsigned flash_parity = 1;            // invert flash pattern
-            unsigned insec = (tick / 1000) % 1000;
+            unsigned insec = tick_ms % 1000;
             if (insec < 500)
                 set_activity_led(flash_parity);
             else

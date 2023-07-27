@@ -45,7 +45,7 @@ void handle_baud_request(uint32_t seq, const void* p, uint32_t cb)
     {
         // Switch baud rate
         uart_flush();
-        delay_micros(10000);
+        delay_millis(10);
         current_baud = pBaud->baud;
         uart_init(current_baud);
     }
