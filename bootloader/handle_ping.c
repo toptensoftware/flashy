@@ -1,6 +1,11 @@
 #include "common.h"
 
 typedef struct PACKED
+{   
+    uint32_t current_time_seconds;
+} PACKET_PING;
+
+typedef struct PACKED
 {
     uint8_t major;
     uint8_t minor;
@@ -25,9 +30,17 @@ typedef struct PACKED
 } PACKET_PING_ACK;
 
 
+// In diskio.c
+extern void set_timeBase(uint64_t current_time_micros);
+
 // Handler
 void handle_ping(uint32_t seq, const void* p, uint32_t cb)
 {
+    // Crack ping packet
+    PACKET_PING* ping = (PACKET_PING*)p;
+    set_timeBase((uint64_t)ping->current_time_seconds * 1000000);
+    
+
     VERSION ver = { FLASHY_VERSION };
     // Send ack packet with version and current rate
     PACKET_PING_ACK ack;

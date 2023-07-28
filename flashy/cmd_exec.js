@@ -1,13 +1,3 @@
-let struct = require('./struct');
-
-let lib = struct.library();
-lib.defineType({
-    name: "command_ack",
-    fields: [
-        "uint32le exitCode",
-        "string cwd",
-    ]
-});
 
 async function run(ctx)
 {
@@ -17,8 +7,15 @@ async function run(ctx)
     // Wait for device
     await ctx.layer.ping(ctx.cl.verbose);
 
+    let handler = {
+        onStdOut: (data) => process.stdout.write(data),
+        onStdErr: (data) => process.stderr.write(data),
+    };
+
+
     // Send command
-    let r = lib.decode("command_ack", await ctx.layer.sendCommand(ctx.cl.cwd, ctx.cl.cmd));
+    let r = await ctx.layer.sendCommand(ctx.cl.cwd, ctx.cl.cmd, handler);
+    return r.exitCode;
 }
 
 module.exports = {

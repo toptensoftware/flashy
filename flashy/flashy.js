@@ -52,8 +52,8 @@ let serial_arg_specs = [
         help: "Don't check bootloader version on device",
     },
     {
-        name: "--flash-baud:<n>|-b",
-        help: "Baud rate for flashing (default=1000000)",
+        name: "--baud:<n>|--flash-baud:<n>|-b",
+        help: "Baud rate for flashing and push/pull (default=1000000)",
         default: 1000000,
     },
     {
@@ -117,6 +117,10 @@ let parser = commandLineParser.parser({
         {
             name: "exec",
             help: "Executes a shell command on the target device",
+        },
+        {
+            name: "pull",
+            help: "Copies files from the device",
         },
         ...serial_arg_specs,
         ...common_arg_specs,

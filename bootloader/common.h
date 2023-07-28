@@ -31,12 +31,15 @@ enum PACKET_ID
     PACKET_ID_DATA = 3,
     PACKET_ID_GO = 4,
     PACKET_ID_REQUEST_BAUD = 5,
-    PACKET_ID_PULL = 6,
-    PACKET_ID_PUSH_DATA = 7,
-    PACKET_ID_PUSH_COMMIT = 8,
-    PACKET_ID_COMMAND = 9,
-    PACKET_ID_STDOUT = 10,
-    PACKET_ID_STDERR = 11,
+    PACKET_ID_COMMAND = 6,
+    PACKET_ID_STDOUT = 7,
+    PACKET_ID_STDERR = 8,
+    PACKET_ID_PULL = 9,
+    PACKET_ID_PULL_HEADER = 10,
+    PACKET_ID_PULL_DATA = 11,
+    PACKET_ID_PUSH_DATA = 12,
+    PACKET_ID_PUSH_COMMIT = 13,
+
 };
 
 // Shared functions
@@ -49,7 +52,6 @@ void handle_data(uint32_t seq, const void* p, uint32_t cb);
 void handle_baud_request(uint32_t seq, const void* p, uint32_t cb);
 void handle_go(uint32_t seq, const void* p, uint32_t cb);
 void handle_pull(uint32_t seq, const void* p, uint32_t cb);
-void reset_pull();
 void handle_push_data(uint32_t seq, const void* p, uint32_t cb);
 void handle_push_commit(uint32_t seq, const void* p, uint32_t cb);
 void reset_push();

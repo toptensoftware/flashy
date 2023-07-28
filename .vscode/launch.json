@@ -14,7 +14,7 @@
             "program": "${workspaceFolder}/flashy/flashy.js",
             "args": [
                 "COM3",
-                "status"
+                "status",
             ],
             "console": "externalTerminal"
         }

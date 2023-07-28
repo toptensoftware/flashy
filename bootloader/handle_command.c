@@ -116,7 +116,7 @@ void trace(const char* format, ...)
 	va_end(args);
 
     flush_stdio();
-    delay_millis(100);
+    delay_millis(10);
 }
 
 void handle_command(uint32_t seq, const void* p, uint32_t cb)
@@ -150,16 +150,16 @@ void handle_command(uint32_t seq, const void* p, uint32_t cb)
     // Execut command
     int exitcode = process_shell(&proc, pszCommand);
 
-    process_close(&proc);
-
     // Flush stdio
     flush_stdio();
 
     // Send response
     PACKET_COMMAND_ACK* ack = (PACKET_COMMAND_ACK*)response_buf;
     ack->exitcode = exitcode;
-    strcpy(ack->cwd, cwd);
+    strcpy(ack->cwd, proc.cwd);
 
-    sendPacket(seq, PACKET_ID_ACK, ack, sizeof(PACKET_COMMAND_ACK) + strlen(cwd) + 1);
+    process_close(&proc);
+
+    sendPacket(seq, PACKET_ID_ACK, ack, sizeof(PACKET_COMMAND_ACK) + strlen(ack->cwd) + 1);
 }
 

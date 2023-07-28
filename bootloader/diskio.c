@@ -1,3 +1,5 @@
+#include <time.h>
+
 #include "raspi.h"
 #include "sdcard.h"
 
@@ -44,21 +46,30 @@ DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff)
     return RES_OK;    
 }
 
+uint64_t g_timeBase_micros = 0;
+
+void set_timeBase(uint64_t current_time_micros)
+{
+    // Store base time at power on
+    g_timeBase_micros = current_time_micros - micros();
+}
+
 DWORD get_fattime()
 {
-    int year = 2023;
-    int month = 1;          // 1 - 12
-    int day = 1;            // 1 - 31
-    int hour = 9;           // 0 - 23    
-    int minute = 0;         // 0 - 59
-    int seconds = 0;        // 0 - 59
+    // Get current time in seconds
+    time_t current_time_secs = (g_timeBase_micros + micros()) / 1000000;
+
+    // Unpack
+    struct tm* ptm = gmtime(&current_time_secs);
+
+    // Convert to DOS format
     return (
-        (DWORD)(year - 1980) << 25 | 
-        (DWORD)month << 21 | 
-        (DWORD)day << 16 | 
-        (DWORD)hour << 11 | 
-        (DWORD)minute << 5 | 
-        (DWORD)(seconds / 2) << 0
+        (DWORD)(ptm->tm_year + 1900 - 1980) << 25 | 
+        (DWORD)(ptm->tm_mon + 1) << 21 | 
+        (DWORD)(ptm->tm_mday) << 16 | 
+        (DWORD)(ptm->tm_hour) << 11 | 
+        (DWORD)(ptm->tm_min) << 5 | 
+        (DWORD)(ptm->tm_sec / 2) << 0
         );
 }
 

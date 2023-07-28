@@ -146,7 +146,6 @@ int main()
             restore_cpu_freq();
 
             // Reset other operations
-            reset_pull();
             reset_push();
         }
 

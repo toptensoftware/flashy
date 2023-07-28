@@ -9,6 +9,7 @@ let path = require('path');
 let packenc = require('./packetEncoder');
 let piModel = require('./piModel');
 let RestartableTimeout = require('./restartableTimeout');
+let struct = require('./struct');
 
 
 // Packet ID's
@@ -18,13 +19,45 @@ const PACKET_ID_ERROR = 2;
 const PACKET_ID_DATA = 3;
 const PACKET_ID_GO = 4;
 const PACKET_ID_REQUEST_BAUD = 5;
-const PACKET_ID_PULL = 6;
-const PACKET_ID_PUSH_DATA = 7;
-const PACKET_ID_PUSH_COMMIT = 8;
-const PACKET_ID_COMMAND = 9;
-const PACKET_ID_STDOUT = 10;
-const PACKET_ID_STDERR = 11;
+const PACKET_ID_COMMAND = 6;
+const PACKET_ID_STDOUT = 7;
+const PACKET_ID_STDERR = 8;
+const PACKET_ID_PULL = 9;
+const PACKET_ID_PULL_HEADER = 10;
+const PACKET_ID_PULL_DATA = 11;
 
+let lib = struct.library();
+lib.defineType({
+    name: "command_ack",
+    fields: [
+        "uint32le exitCode",
+        "string cwd",
+    ]
+});
+lib.defineType({
+    name: "ping",
+    fields: [
+        "uint32le current_time_secs",
+    ]
+})
+lib.defineType({
+    name: "ping_ack",
+    fields: [
+        "uint8 verMajor",
+        "uint8 verMinor",
+        "uint8 verBuild",
+        "uint8 _unused",
+        "uint32le raspi",
+        "uint32le aarch",
+        "uint32le boardRevision",
+        "uint32le boardSerialHi",
+        "uint32le boardserialLo",
+        "uint32le maxPacketSize",
+        "uint32le cpu_freq",
+        "uint32le min_cpu_freq",
+        "uint32le max_cpu_freq",
+    ]    
+})
 
 
 // Check the bootloader version and this script's version number match
@@ -86,6 +119,19 @@ function layer(port, options)
 
     // Timer, restarted on each packet received
     let timeout = null;
+
+    // Callback for pull handler
+    let stdio_handler = null;
+    let pull_handler = null;
+
+    // Buffer for output of encoder (will be grown as necessary)
+    let encBuffer = Buffer.alloc(1024);
+
+    // Next sequence number
+    let next_seq = 101;
+    let current_seq = -1;
+    
+    
     
     // Receive packets
     function onPacket(seq, cmd, data)
@@ -110,11 +156,23 @@ function layer(port, options)
                 break;
 
             case PACKET_ID_STDERR:
-                process.stderr.write(data);
+                if (stdio_handler)
+                    stdio_handler.onStdErr(data);
                 break;
         
             case PACKET_ID_STDOUT:
-                process.stdout.write(data);
+                if (stdio_handler)
+                    stdio_handler.onStdOut(data);
+                break;
+                
+            case PACKET_ID_PULL_HEADER:
+                if (pull_handler && seq == current_seq)
+                    pull_handler.onHeader(data);
+                break;
+
+            case PACKET_ID_PULL_DATA:
+                if (pull_handler && seq == current_seq)
+                    pull_handler.onData(data);
                 break;
 
             default:
@@ -129,14 +187,10 @@ function layer(port, options)
         console.error(`\nPacket decode error: ${err}`);
     }
 
-    // Buffer for output of encoder (will be grown as necessary)
-    let encBuffer = Buffer.alloc(1024);
-    let next_seq = 101;
-
     async function send(cmd, buf)
     {
         // Allocate sequenct number
-        let current_seq = next_seq++;
+        current_seq = next_seq++;
 
         // Time out
         let promise_reject = null;
@@ -205,6 +259,7 @@ function layer(port, options)
             {
                 timeout.cancel();
             }
+            current_seq = -1;
         }
     }
 
@@ -224,6 +279,8 @@ function layer(port, options)
         return ("00000000" + val.toString(16)).slice(-digits);
     }
 
+    let last_ping_result;
+
     // Ping the device and return info from response
     async function ping(showDeviceInfo)
     {
@@ -234,24 +291,16 @@ function layer(port, options)
             log && log('.');
             try
             {
-                // Send packet
-                let data = await send(PACKET_ID_PING, null);
+                // Setup ping packet with current time in seconds
+                let ping = {
+                    current_time_secs: (Date.now() - new Date().getTimezoneOffset()*60*1000)/1000
+                }
+
+                // Send ping
+                let data = await send(PACKET_ID_PING, lib.encode("ping", ping));
         
                 // Decode response
-                let r = {
-                    verMajor: data[0],
-                    verMinor: data[1],
-                    verBuild: data[2],
-                    raspi: data.readUInt32LE(4),
-                    aarch: data.readUInt32LE(8),
-                    boardRevision: data.readUInt32LE(12),
-                    boardSerialHi: data.readUInt32LE(16),
-                    boardserialLo: data.readUInt32LE(20),
-                    maxPacketSize: data.readUInt32LE(24),
-                    cpu_freq: data.readUInt32LE(28),
-                    min_cpu_freq: data.readUInt32LE(32),
-                    max_cpu_freq: data.readUInt32LE(36),
-                }
+                let r = lib.decode("ping_ack", data);
                 r.model = piModel.piModelFromRevision(r.boardRevision);
                 log && log(" ok\n");
 
@@ -271,6 +320,7 @@ function layer(port, options)
                 // Do version checks
                 checkVersion(r, !options.check_version);
 
+                last_ping_result = r;
                 return r;
             }
             catch (err)
@@ -281,6 +331,18 @@ function layer(port, options)
         }
 
         throw new Error(`Failed to ping device after ${options.ping_attempts} attempts.`)
+    }
+
+    async function boost(cl)
+    {
+        let cpufreq = 0;
+        if ((cl.cpuBoost == "auto" && cl.baud > 1000000) || cl.cpuBoost == 'yes')
+            cpufreq = last_ping_result.max_cpu_freq;
+        if (cl.baud != 115200 || cpufreq != 0)
+        {
+            await switchBaud(cl.baud, cl.resetTimeout, cpufreq);
+            await ping();
+        }    
     }
 
     // Sends a request to device to switch baud rate and on success
@@ -326,7 +388,8 @@ function layer(port, options)
         log && log(" ok\n");
     }
 
-    async function sendCommand(cwd, cmd)
+
+    async function sendCommand(cwd, cmd, handler)
     {
         log && log(`Sending command ${cwd}> ${cmd}...\n`);
 
@@ -336,9 +399,29 @@ function layer(port, options)
         let packet = Buffer.concat([buf_cwd, buf_cmd]);
 
         // Send it
+        stdio_handler = handler;
         let r = await send(PACKET_ID_COMMAND, packet);
+        stdio_handler = null;
 
         // Done
+        log && log(" ok\n");
+        return lib.decode("command_ack", r);
+    }
+
+    async function sendPull(file, handler)
+    {
+        log && log(`Sending pull request ${file}...\n`);
+
+        // Set pull handler
+        pull_handler = handler;
+
+        // Send request
+        let buf = Buffer.from(file + "\0", 'utf8');
+        let r = await send(PACKET_ID_PULL, buf);
+
+        // Clean up
+        pull_handler = null;
+
         log && log(" ok\n");
         return r;
     }
@@ -347,10 +430,12 @@ function layer(port, options)
     return {
         send,
         ping,
+        boost,
         switchBaud,
         sendData,
         sendGo,
         sendCommand,
+        sendPull,   
         get options() { return options; },
         get port() { return port; },
     }

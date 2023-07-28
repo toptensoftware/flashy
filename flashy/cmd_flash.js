@@ -249,14 +249,7 @@ async function run(ctx)
         checkKernel(ping, cl.imagefile.filename);
         
     // Switch baud rate and cpu frequency while sending file
-    let cpufreq = 0;
-    if ((cl.cpuBoost == "auto" && cl.flashBaud > 1000000) || cl.cpuBoost == 'yes')
-        cpufreq = ping.max_cpu_freq;
-    if (cl.flashBaud != 115200 || cpufreq != 0)
-    {
-        await layer.switchBaud(cl.flashBaud, cl.resetTimeout, cpufreq);
-        await layer.ping();
-    }
+    await layer.boost(cl);
 
     // Send file
     if (cl.imagefile.kind == "hex")
