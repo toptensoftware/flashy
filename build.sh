@@ -9,7 +9,7 @@ fi
 (cd flashy ; npm version patch)
 
 # Build bootloader
-(cd bootloader ; make cleanall aarch)
+(cd bootloader ; make aarch -B)
 
 ## Package it
 (cd flashy ; npm publish --access public)
