@@ -1,5 +1,6 @@
 let fs = require('fs');
 let path = require('path');
+let argUtils = require('./argUtils');
 
 async function push_file(ctx, local_path, remote_path)
 {
@@ -16,7 +17,7 @@ async function push_file(ctx, local_path, remote_path)
     // Open the file
     let fd = fs.openSync(local_path, "r");
 
-    process.stdout.write(`${remote_path}: `)
+    process.stdout.write(`${local_path}: `)
 
     // Send data
     while (true)
@@ -25,8 +26,6 @@ async function push_file(ctx, local_path, remote_path)
         buf.writeUInt32LE(token, 0);
         buf.writeUInt32LE(offset, 4);
         let bytes_read = fs.readSync(fd, buf, 8, buf.length - 8, offset);
-        if (bytes_read == 0)
-            break;
 
         // Send it
         let r = await ctx.layer.sendPushData(buf.subarray(0, bytes_read + 8));
@@ -38,6 +37,9 @@ async function push_file(ctx, local_path, remote_path)
 
         // Update offset
         offset += bytes_read;
+
+        if (bytes_read < buf.length - 8)
+            break;
     }
 
     // Close file
@@ -69,6 +71,35 @@ async function push_file(ctx, local_path, remote_path)
     process.stdout.write(' ok\n');
 }
 
+async function push_dir(ctx, local_path, remote_path)
+{
+    if (ctx.cl.verbose)
+        console.log(`pushing directory: ${local_path} => ${remote_path}`);
+
+    let dir = fs.opendirSync(local_path);
+    try
+    {
+        while (true)
+        {
+            let de = dir.readSync();
+            if (de == null)
+                break;
+            
+            if (de.isDirectory())
+            {
+                await push_dir(ctx, path.join(local_path, de.name), argUtils.pathjoin(remote_path, de.name));
+            }
+            else
+            {
+                await push_file(ctx, path.join(local_path, de.name), argUtils.pathjoin(remote_path, de.name));
+            }
+        }
+    }
+    finally
+    {
+        dir.closeSync();
+    }
+}
 
 async function run(ctx)
 {
@@ -77,9 +108,55 @@ async function run(ctx)
     await ctx.layer.ping(ctx.cl.verbose);
     await ctx.layer.boost(ctx.cl);
 
-    for (let f of ctx.cl.files)
+    // Expand files
+    let files = argUtils.expandArgs(ctx.cl.files);
+    
+    // Quit if any specified files are missing
+    let missing = files.filter(x => x.stat == null);
+    if (missing.length)
     {
-        await push_file(ctx, f, f);
+        throw new Error(`no such file or directory: ${missing[0].relative}`);
+    }
+
+    // Work out target
+    let target = argUtils.pathjoin(ctx.cl.rwd, ctx.cl.to);
+    let target_stats = await ctx.layer.exec_ls('/', `ls -ald \"${target}\"`, true);
+    if (target_stats.length > 1)
+    {
+        throw new Error(`target '${target}' matches multiple items`);
+    }
+    let target_stat = target_stats.length > 0 ? target_stats[0] : null;
+    
+    // Single file?
+    if (files.length == 1 && !files[0].stat.isDirectory())
+    {
+        if (target_stat != null && target_stat.isdir)
+        {
+            // Target is a directory
+            await push_file(ctx, files[0].relative, argUtils.pathjoin(target, path.basename(files[0].relative)));
+        }
+        else
+        {
+            // Target is a file
+            await push_file(ctx, files[0].relative, target);
+        }
+        return;
+    }
+
+    // Check target exists and is a directory
+    if (target_stat == null)
+        throw new Error(`target directory '${target}' doesn't exist`);
+    if (!target_stat.isdir)
+        throw new Error(`target '${target}' is not a directory`);
+
+    // Expand list of files and process
+    for (let f of files)
+    {
+        let remote_path = argUtils.pathjoin(target, path.basename(f.relative))
+        if (f.stat.isDirectory())
+            await push_dir(ctx, f.relative, remote_path);
+        else
+            await push_file(ctx, f.relative, remote_path);
     }
 }
 
@@ -92,14 +169,14 @@ module.exports = {
             default: [],
         },
         {
-            name: "--cwd:<dir>",
-            help: "The working directory on the device in which to execute the command (default = /)",
-            default: '/',
+            name: "--to:<target>",
+            help: "Where to place the pushed file(s)",
+            default: '.',
         },
         {
-            name: "--to:<target>",
-            help: "Where to save the pulled file(s)",
-            default: '.',
+            name: "--rwd:<dir>",
+            help: "The remote working directory (ie: on the device) in which to execute the command (default = /)",
+            default: '/',
         },
         {
             name: "--no-clobber|-n",

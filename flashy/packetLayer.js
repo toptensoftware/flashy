@@ -173,11 +173,15 @@ function layer(port, options)
             case PACKET_ID_STDERR:
                 if (stdio_handler)
                     stdio_handler.onStdErr(data);
+                else
+                    process.stderr.write(data);
                 break;
         
             case PACKET_ID_STDOUT:
                 if (stdio_handler)
                     stdio_handler.onStdOut(data);
+                else
+                    process.stdout.write(data);
                 break;
                 
             case PACKET_ID_PULL_HEADER:
@@ -451,6 +455,60 @@ function layer(port, options)
         return await send(PACKET_ID_PUSH_COMMIT, lib.encode("push_commit", commit));
     }
 
+    // Parse the output of a "ls -l" output from device
+    function parse_ls_output(output)
+    {
+        let entries = [];
+        for (let l of output.split('\n'))
+        {
+            let m = l.match(/^([-d][-r][-s][-h][-a])\s+(\d\d)\/(\d\d)\/(\d\d\d\d)\s+(\d\d)\:(\d\d)\:(\d\d)\s+(\d+)\s+(.*)$/);
+            if (m)
+            {
+                entries.push({
+                    attr: m[1],
+                    mtime: new Date(parseInt(m[4]), parseInt(m[3])-1, parseInt(m[2]), parseInt(m[5]), parseInt(m[6]), parseInt(m[7])),
+                    size: m[8],
+                    name: m[9],
+                    isdir: m[1][0] == 'd',
+                })
+            }
+        }
+
+        return entries;
+
+    }
+
+    async function exec_ls(rwd, cmd, emptyOnError)
+    {
+        let bufs = [];
+        function onStdOut(data)
+        {
+            bufs.push(Buffer.concat([data]));
+        }
+
+        function onStdErr(data)
+        {
+            if (!emptyOnError)
+                process.stderr.write(data);
+        }
+
+        let r = await sendCommand(rwd, cmd, {
+            onStdOut,
+            onStdErr,
+        })
+
+        if (r.exitCode != 0)
+        {
+            if (emptyOnError)
+                return [];
+            throw new Error(`Failed to list files '${cmd}'`);
+        }
+
+        // Parse directory listing
+        return parse_ls_output(Buffer.concat(bufs).toString('utf8'));
+    }
+
+
     // Return API
     return {
         send,
@@ -463,6 +521,7 @@ function layer(port, options)
         sendPull,   
         sendPushData,
         sendPushCommit,
+        exec_ls,
         get options() { return options; },
         get port() { return port; },
     }

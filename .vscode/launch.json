@@ -15,7 +15,7 @@
             "args": [
                 "COM3",
                 "push",
-                "loadtest.md"
+                "loadtest.*",
             ],
             "console": "externalTerminal"
         }

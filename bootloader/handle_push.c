@@ -1,4 +1,7 @@
 #include "common.h"
+#include "../lib/FFsh/FFsh/src/path.h"
+#include "../lib/FFsh/FFsh/src/ffex.h"
+
 
 // Load data packets to a file
 // host -> device
@@ -109,6 +112,12 @@ static int handle_push_commit_internal(uint32_t seq, const void* p, uint32_t cb)
     // Unlink existing file if overwriting
     if (pPush->overwrite)
         f_unlink(pPush->name);
+
+    // Make sure the target directory exists
+    char szDir[FF_MAX_LFN];
+    pathdir(pPush->name, szDir);
+    pathcan(szDir);
+    f_mkdir_r(szDir);
 
     // Move temp file to final location
     err = f_rename(temp_filename, pPush->name);

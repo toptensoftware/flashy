@@ -14,7 +14,7 @@ async function run(ctx)
 
 
     // Send command
-    let r = await ctx.layer.sendCommand(ctx.cl.cwd, ctx.cl.cmd, handler);
+    let r = await ctx.layer.sendCommand(ctx.cl.rwd, ctx.cl.cmd, handler);
     return r.exitCode;
 }
 
@@ -26,8 +26,8 @@ module.exports = {
             help: "The shell command to execute",
         },
         {
-            name: "--cwd:<dir>",
-            help: "The working directory on the device in which to execute the command (default = /)",
+            name: "--rwd:<dir>",
+            help: "The remote working directory (ie: on the device) in which to execute the command (default = /)",
             default: '/',
         },
     ],
