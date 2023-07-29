@@ -108,8 +108,6 @@ function expandArg(arg)
             })
         }
     
-        dir.closeSync();
-    
         // If no matches, use arg as is
         if (files.length == 0)
         {

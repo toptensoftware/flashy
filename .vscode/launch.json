@@ -14,8 +14,7 @@
             "program": "${workspaceFolder}/flashy/flashy.js",
             "args": [
                 "COM3",
-                "push",
-                "loadtest.*",
+                "pull", "config*.*"
             ],
             "console": "externalTerminal"
         }

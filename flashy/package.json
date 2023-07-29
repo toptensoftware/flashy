@@ -4,6 +4,7 @@
   "description": "All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal",
   "main": "flashy.js",
   "dependencies": {
+    "chalk": "^4.1.2",
     "decompress": "^4.2.1",
     "serialport": "^9.0.4"
   },

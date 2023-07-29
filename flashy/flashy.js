@@ -126,6 +126,10 @@ let parser = commandLineParser.parser({
             name: "push",
             help: "Copies files to the device",
         },
+        {
+            name: "shell",
+            help: "Opens an interactive command shell"
+        },
         ...serial_arg_specs,
         ...common_arg_specs,
         {

@@ -478,7 +478,7 @@ function layer(port, options)
 
     }
 
-    async function exec_ls(rwd, cmd, emptyOnError)
+    async function exec_cmd(rwd, cmd, suppressErrors)
     {
         let bufs = [];
         function onStdOut(data)
@@ -488,7 +488,7 @@ function layer(port, options)
 
         function onStdErr(data)
         {
-            if (!emptyOnError)
+            if (!suppressErrors)
                 process.stderr.write(data);
         }
 
@@ -499,13 +499,19 @@ function layer(port, options)
 
         if (r.exitCode != 0)
         {
-            if (emptyOnError)
-                return [];
-            throw new Error(`Failed to list files '${cmd}'`);
+            if (suppressErrors)
+                return "";
+            throw new Error(`Failed to exec '${cmd}'`);
         }
 
-        // Parse directory listing
-        return parse_ls_output(Buffer.concat(bufs).toString('utf8'));
+        return Buffer.concat(bufs).toString('utf8');
+    }
+
+
+    async function exec_ls(rwd, cmd, emptyOnError)
+    {
+        let output = await exec_cmd(rwd, cmd, emptyOnError);
+        return parse_ls_output(output);
     }
 
 
@@ -521,6 +527,7 @@ function layer(port, options)
         sendPull,   
         sendPushData,
         sendPushCommit,
+        exec_cmd,
         exec_ls,
         get options() { return options; },
         get port() { return port; },

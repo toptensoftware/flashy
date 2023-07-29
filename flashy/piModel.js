@@ -6,14 +6,14 @@ function piModelFromRevision(revision)
         // new revision
         switch ((revision >> 4) & 0xFF)
         {
-            case 0: return { name: "Raspberry Pi Model A", major: 1, ledPin: -16 };
-            case 1: return { name: "Raspberry Pi Model B R2", major: 1, ledPin: -16 };
-            case 2: return { name: "Raspberry Pi Model A+", major: 1, ledPin: 47 };
-            case 3: return { name: "Raspberry Pi Model B+", major: 1, ledPin: 47 };
-            case 4: return { name: "Raspberry Pi 2 Model B", major: 2, ledPin: 47 };
-            case 6: return { name: "Compute Module", major: 1, ledPin: 47 };
-            case 8: return { name: "Raspberry Pi 3 Model B", major: 3, ledPin: 0 };
-            case 9: return { name: "Raspberry Pi Zero", major: 1, ledPin: -47 };
+            case 0: return  { name: "Raspberry Pi Model A", major: 1, ledPin: -16 };
+            case 1: return  { name: "Raspberry Pi Model B R2", major: 1, ledPin: -16 };
+            case 2: return  { name: "Raspberry Pi Model A+", major: 1, ledPin: 47 };
+            case 3: return  { name: "Raspberry Pi Model B+", major: 1, ledPin: 47 };
+            case 4: return  { name: "Raspberry Pi 2 Model B", major: 2, ledPin: 47 };
+            case 6: return  { name: "Compute Module", major: 1, ledPin: 47 };
+            case 8: return  { name: "Raspberry Pi 3 Model B", major: 3, ledPin: 0 };
+            case 9: return  { name: "Raspberry Pi Zero", major: 1, ledPin: -47 };
             case 10: return { name: "Compute Module 3", major: 3, ledPin: 0 };
             case 12: return { name: "Raspberry Pi Zero W", major: 1, ledPin: -47 };
             case 13: return { name: "Raspberry Pi 3 Model B+", major: 3, ledPin: 29 };
