@@ -25,6 +25,8 @@ const PACKET_ID_STDERR = 8;
 const PACKET_ID_PULL = 9;
 const PACKET_ID_PULL_HEADER = 10;
 const PACKET_ID_PULL_DATA = 11;
+const PACKET_ID_PUSH_DATA = 12;
+const PACKET_ID_PUSH_COMMIT = 13;
 
 let lib = struct.library();
 lib.defineType({
@@ -39,7 +41,7 @@ lib.defineType({
     fields: [
         "uint32le current_time_secs",
     ]
-})
+});
 lib.defineType({
     name: "ping_ack",
     fields: [
@@ -57,7 +59,20 @@ lib.defineType({
         "uint32le min_cpu_freq",
         "uint32le max_cpu_freq",
     ]    
-})
+});
+lib.defineType({
+    name: "push_commit",
+    fields: [
+        "uint32le token",
+        "uint32le size",
+        "uint16le time",
+        "uint16le date",
+        "uint8 attr",
+        "uint8 overwrite",
+        "string name",
+    ]
+});
+
 
 
 // Check the bootloader version and this script's version number match
@@ -426,6 +441,16 @@ function layer(port, options)
         return r;
     }
 
+    async function sendPushData(data)
+    {
+        return await send(PACKET_ID_PUSH_DATA, data);
+    }
+
+    async function sendPushCommit(commit)
+    {
+        return await send(PACKET_ID_PUSH_COMMIT, lib.encode("push_commit", commit));
+    }
+
     // Return API
     return {
         send,
@@ -436,6 +461,8 @@ function layer(port, options)
         sendGo,
         sendCommand,
         sendPull,   
+        sendPushData,
+        sendPushCommit,
         get options() { return options; },
         get port() { return port; },
     }

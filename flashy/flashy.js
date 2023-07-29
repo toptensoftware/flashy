@@ -122,6 +122,10 @@ let parser = commandLineParser.parser({
             name: "pull",
             help: "Copies files from the device",
         },
+        {
+            name: "push",
+            help: "Copies files to the device",
+        },
         ...serial_arg_specs,
         ...common_arg_specs,
         {

@@ -174,10 +174,8 @@ async function pull_dir(ctx, remote_path, local_path)
 
 async function run(ctx)
 {
-    // Set default baud
-    await ctx.port.switchBaud(115200);
-
     // Wait for device
+    await ctx.port.switchBaud(115200);
     await ctx.layer.ping(ctx.cl.verbose);
     await ctx.layer.boost(ctx.cl);
 
