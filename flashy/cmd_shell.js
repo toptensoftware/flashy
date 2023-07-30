@@ -13,31 +13,43 @@ async function run(ctx)
     async function getLabel()
     {
         // get volume label
-        let match = (await ctx.layer.exec_cmd("/", "label 0:")).match(/^(.*\:) ....-.... (.*)/);
+        let match = (await ctx.layer.exec_cmd("/", "label /sd")).match(/^(.*) ....-.... (.*)/);
         vol = match ? match[2] : "";
     }
     await getLabel();
 
 
     // The current remote working directory
-    let rwd = '/'
+    let rwd = '/sd'
 
     // The repl server instance
     let repl;
 
     function format_prompt()
     {
-        return chalk.green(ping.model.name) + " " + chalk.cyan(vol) + " :" + chalk.cyan(rwd) + "> ";
+        return chalk.green(`${ping.model.name} (${vol})`) + " " + chalk.cyan(rwd) + "> ";
     }
 
     // Command handler
     async function invoke_command(cmd, context, filename, callback) {
+
+        if (cmd.trim().length == 0)
+        {
+            callback();
+            return;
+        }
 
         // Invoke it
         let r = await ctx.layer.sendCommand(rwd, cmd.trim(), null);
 
         // Save new working directory
         rwd = r.cwd;
+
+        if (r.did_exit)
+        {
+            repl.close();
+            return;
+        }
 
         if (cmd.indexOf("label") >= 0)
         {

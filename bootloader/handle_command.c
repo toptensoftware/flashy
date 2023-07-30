@@ -11,7 +11,8 @@ void _vcbprintf(void (*write)(void*, char), void* arg, const char* format, va_li
 typedef struct PACKED
 {
     int32_t  exitcode;     // Error code
-    char     cwd[];          // New working directory
+    uint8_t  did_exit;     // Was "exit" or "reboot" command invoked
+    char     cwd[];        // New working directory
 } PACKET_COMMAND_ACK;
 
 static uint32_t stdio_seq;
@@ -108,6 +109,13 @@ void ffsh_sleep(uint32_t ms)
     }
 }
 
+
+bool g_bRebootRequested = false;
+void ffsh_reboot()
+{
+    g_bRebootRequested = true;
+}
+
 void trace(const char* format, ...)
 {
 	va_list args;
@@ -148,6 +156,7 @@ void handle_command(uint32_t seq, const void* p, uint32_t cb)
     process_set_progress(&proc, send_progress_pings);
 
     // Execut command
+    g_bRebootRequested = false;
     int exitcode = process_shell(&proc, pszCommand);
 
     // Flush stdio
@@ -156,10 +165,17 @@ void handle_command(uint32_t seq, const void* p, uint32_t cb)
     // Send response
     PACKET_COMMAND_ACK* ack = (PACKET_COMMAND_ACK*)response_buf;
     ack->exitcode = exitcode;
+    ack->did_exit = proc.did_exit;
     strcpy(ack->cwd, proc.cwd);
 
     process_close(&proc);
 
     sendPacket(seq, PACKET_ID_ACK, ack, sizeof(PACKET_COMMAND_ACK) + strlen(ack->cwd) + 1);
+
+    if (g_bRebootRequested)
+    {
+        delay_millis(100);
+        reboot();
+    }
 }
 

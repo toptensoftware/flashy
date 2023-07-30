@@ -196,7 +196,7 @@ module.exports = {
         {
             name: "--rwd:<dir>",
             help: "The remote working directory (ie: on the device) in which to execute the command (default = /)",
-            default: '/',
+            default: '/sd',
         },
         {
             name: "--to:<target>",

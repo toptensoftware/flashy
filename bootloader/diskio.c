@@ -6,6 +6,8 @@
 #include <ff.h>
 #include <diskio.h>
 
+const char* VolumeStr[FF_VOLUMES] = { "sd" };
+
 // FatFS file system object
 FATFS g_fs;
 

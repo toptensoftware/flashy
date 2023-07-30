@@ -13,8 +13,7 @@
             "type": "node",
             "program": "${workspaceFolder}/flashy/flashy.js",
             "args": [
-                "COM3",
-                "pull", "config*.*"
+                "shell"
             ],
             "console": "externalTerminal"
         }

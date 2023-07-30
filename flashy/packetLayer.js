@@ -33,6 +33,7 @@ lib.defineType({
     name: "command_ack",
     fields: [
         "uint32le exitCode",
+        "uint8 did_exit",
         "string cwd",
     ]
 });

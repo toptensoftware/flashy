@@ -394,7 +394,7 @@ function format_help(spec)
 }
 
 // Parse command line
-function parse(args, options)
+function parse(args, defaults, options)
 {
     let spec = options.spec;
 
@@ -424,11 +424,11 @@ function parse(args, options)
     }
 
     // Setup result with defaults
-    let result = {};
+    let result = Object.assign({}, defaults || {});
     for (let s of spec)
     {
         // Setup default value
-        if (s.default !== undefined)
+        if (s.default !== undefined && result[s.key] === undefined)
         {
             if (Array.isArray(s.default))
             {
@@ -676,7 +676,7 @@ function parser(options)
 
     // Return API
     return {
-        parse: (args) => parse(args, options),
+        parse: (args, defaults) => parse(args, defaults, options),
         check: (cl) => check(options.spec, cl),
         format_usage: () => format_usage(options.spec),
         format_help: () => format_help(options.spec),

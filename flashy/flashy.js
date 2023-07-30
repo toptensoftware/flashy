@@ -3,12 +3,9 @@
 ///////////////////////////////////////////////////////////////////////////////////
 // Flashy v2.0
 
-/*
 let os = require('os');
-let child_process = require('child_process');
 let path = require('path');
 let fs = require('fs');
- */
 
 let serial = require('./serial');
 let packetLayer = require('./packetLayer');
@@ -144,11 +141,19 @@ let parser = commandLineParser.parser({
     ]
 });
 
+// Load command line defaults
+let defaults = {};
+let defaultsFile = path.join(os.homedir(), ".flashy.json");
+if (fs.existsSync(defaultsFile))
+{
+    defaults = JSON.parse(fs.readFileSync(defaultsFile, "utf8"));
+}
+
 // Parse command line
-let cl = parser.parse(process.argv.slice(2));
+let cl = parser.parse(process.argv.slice(2), defaults);
 if (!cl.$command)
     parser.handle_help(cl);
-
+    
 // If no command specified, assume "flash"
 if (!cl.$command)
     cl.$command = "flash";
