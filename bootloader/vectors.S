@@ -32,6 +32,8 @@
 .globl _start
 _start:
     mov sp,#0x08000000
+    // Store r0-r4 for chain boot
+    push { r0, r1, r2, r3 }
     bl start_main
 hang: b hang
 
@@ -62,7 +64,12 @@ GETPC:
 
 .globl BRANCHTO
 BRANCHTO:
-    bx r0
+    mov r5, r0
+    mov sp,#0x08000000
+    sub sp,#16
+    pop { r0, r1, r2, r3 }
+    bx r5
+
 
 .globl dummy
 dummy:
@@ -76,6 +83,9 @@ dummy:
 .globl _start
 _start:
     mov sp, #0x08000000
+    // Store x0-x3 for chain boot
+    stp x0, x1, [sp, #-16]!
+    stp x2, x3, [sp, #-16]!
     bl start_main
 hang: b hang
 
@@ -102,6 +112,9 @@ GETPC:
 .globl BRANCHTO
 BRANCHTO:
     mov w30,w0
+    mov sp, #(0x08000000-32)
+    ldp	x2, x3, [sp], #16
+    ldp	x0, x1, [sp], #16
     ret
 
 

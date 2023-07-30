@@ -9,39 +9,39 @@
 _start:
 
     // Move kernel image to himem    
-    ldr r0,=#load_address           /* pDest */
-    ldr r1,=#kernel_image           /* pSource */
-    ldr r2,=#kernel_image_end       /* pEnd */
+    ldr r4,=#load_address           /* pDest */
+    ldr r5,=#kernel_image           /* pSource */
+    ldr r6,=#kernel_image_end       /* pEnd */
 memcpy_1:
-    ldr r3, [r1], #4
-    cmp r2, r1
-    str r3, [r0], #4
+    ldr r7, [r5], #4
+    cmp r6, r5
+    str r7, [r4], #4
     bne memcpy_1
 
     // Jump to start
-    mov r0,#load_address
-    bx r0
+    mov r4,#load_address
+    bx r4
 
 #else
 
 .globl _start
 _start:
 
-    mov x0,#load_address                    // pDest 
-    adrp x1,kernel_image
-    add x1,x1,#kernel_image
-    movz x4,#(kernel_image_end-kernel_image) & 0xFFFF   // count
-    movk x4,#(kernel_image_end-kernel_image) >> 16, lsl #16
-    mov	x2, #0x0                   	        // offset
+    mov x4,#load_address                    // pDest 
+    adrp x5,kernel_image
+    add x5,x5,#kernel_image
+    movz x8,#(kernel_image_end-kernel_image) & 0xFFFF   // count
+    movk x8,#(kernel_image_end-kernel_image) >> 16, lsl #16
+    mov	x6, #0x0                   	        // offset
 memcpy_1:
-    ldr	x3, [x1, x2]
-    str	x3, [x0, x2]
-    add	x2, x2, #0x8
-    cmp	x2, x4
+    ldr	x7, [x5, x6]
+    str	x7, [x4, x6]
+    add	x6, x6, #0x8
+    cmp	x6, x8
     b.ne	memcpy_1
 
-    mov x0,#load_address
-    br x0
+    mov x4,#load_address
+    br x4
 
 #endif
 

@@ -24,7 +24,7 @@ typedef struct PACKED
     char     name[];            // Null terminated string with file name to push
 } PACKET_PUSH_COMMIT;
 
-#define temp_filename "/push.tmp"
+#define temp_filename "/sd/push.tmp"
 
 // File system state
 static uint32_t push_token = 0;

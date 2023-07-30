@@ -1,7 +1,6 @@
 #include <stdarg.h>
 #include "common.h"
 #include "sdcard.h"
-#include "../lib/FFsh/FFsh/src/ffsh.h"
 #include <malloc.h>
 
 // From ceeelib
@@ -110,10 +109,17 @@ void ffsh_sleep(uint32_t ms)
 }
 
 
-bool g_bRebootRequested = false;
-void ffsh_reboot()
+START_COMMAND_TABLE(flashy_command_table)
+    COMMAND(reboot)
+    COMMAND(chain)
+END_COMMAND_TABLE
+
+bool dispatch_flashy_command(struct PROCESS* proc)
 {
-    g_bRebootRequested = true;
+    if (process_dispatch(proc, flashy_command_table))
+        return true;
+
+    return dispatch_builtin_command(proc);
 }
 
 void trace(const char* format, ...)
@@ -149,33 +155,32 @@ void handle_command(uint32_t seq, const void* p, uint32_t cb)
 
     // Setup command context
     struct PROCESS proc;
-    process_init(&proc);
+    process_init(&proc, dispatch_flashy_command);
     process_set_cwd(&proc, cwd);
     process_set_stderr(&proc, NULL, write_stderr);
     process_set_stdout(&proc, NULL, write_stdout);
     process_set_progress(&proc, send_progress_pings);
 
     // Execut command
-    g_bRebootRequested = false;
-    int exitcode = process_shell(&proc, pszCommand);
+    process_shell(&proc, pszCommand);
 
+    // Send response
+    finish_handle_command(&proc);
+}
+
+void finish_handle_command(struct PROCESS* proc)
+{
     // Flush stdio
     flush_stdio();
 
     // Send response
     PACKET_COMMAND_ACK* ack = (PACKET_COMMAND_ACK*)response_buf;
-    ack->exitcode = exitcode;
-    ack->did_exit = proc.did_exit;
-    strcpy(ack->cwd, proc.cwd);
+    ack->exitcode = proc->exitcode;
+    ack->did_exit = proc->did_exit;
+    strcpy(ack->cwd, proc->cwd);
 
-    process_close(&proc);
+    process_close(proc);
 
-    sendPacket(seq, PACKET_ID_ACK, ack, sizeof(PACKET_COMMAND_ACK) + strlen(ack->cwd) + 1);
-
-    if (g_bRebootRequested)
-    {
-        delay_millis(100);
-        reboot();
-    }
+    sendPacket(stdio_seq, PACKET_ID_ACK, ack, sizeof(PACKET_COMMAND_ACK) + strlen(ack->cwd) + 1);
 }
 

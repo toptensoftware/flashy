@@ -7,6 +7,7 @@
 #include "crc32.h"
 #include "diskio.h"
 #include <ff.h>
+#include "../lib/FFsh/FFsh/src/ffsh.h"
 
 // Packed structure
 #define PACKED __attribute__((__packed__))
@@ -56,3 +57,8 @@ void handle_push_data(uint32_t seq, const void* p, uint32_t cb);
 void handle_push_commit(uint32_t seq, const void* p, uint32_t cb);
 void reset_push();
 void handle_command(uint32_t seq, const void* p, uint32_t cb);
+void finish_handle_command(struct PROCESS* proc);
+
+// Shell command handlers
+int cmd_reboot(struct PROCESS* proc);
+int cmd_chain(struct PROCESS* proc);
