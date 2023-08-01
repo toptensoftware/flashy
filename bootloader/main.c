@@ -1,4 +1,6 @@
 #include "common.h"
+#include "cmdline.h"
+#include "chainboot.h"
 
 // The default baud rate
 #define default_baud 115200
@@ -21,6 +23,9 @@ uint32_t reset_timeout_millis = 2500;
 uint32_t original_cpu_freq = 0;
 uint32_t min_cpu_freq = 0;
 uint32_t max_cpu_freq = 0;
+
+// Set when autochain is pending
+bool autochain_armed = false;
 
 // Error report packet
 // device -> host sent on packet decode error
@@ -57,6 +62,9 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cb)
 {
     // Store packet time
     last_received_packet_time_ms = millis();
+
+    // Disarm autochain once a packet is received
+    autochain_armed = false;
 
     // Dispatch by id
     switch (id)
@@ -105,6 +113,7 @@ void onPacketError(int code)
     sendPacket(0, PACKET_ID_ERROR, &err, sizeof(err));
 }
 
+
 // Main
 int main()
 {
@@ -114,12 +123,20 @@ int main()
     min_cpu_freq = get_min_cpu_freq();
     max_cpu_freq = get_max_cpu_freq();
 
+    process_cmdline();
+
     // Setup packet decoder
     decode_context ctx = {0};
     ctx.onError = onPacketError;
     ctx.onPacket = onPacketReceived;
     ctx.pBuf = decoder_buf;
     ctx.cbBuf = sizeof(decoder_buf);
+
+    // Setup activity pattern
+    autochain_armed = cl_autochain_target != NULL && cl_autochain_timeout_millis != 0;
+
+    // Capture start time
+    uint32_t start_millis = millis();
 
     // Main loop
     while (true)
@@ -149,17 +166,25 @@ int main()
             reset_push();
         }
 
+        // Time to auto chain?
+        if (autochain_armed && (tick_ms - start_millis) > cl_autochain_timeout_millis)
+        {
+            autochain_armed = false;
+
+            // Make sure SD card mounted
+            mount_sdcard();
+
+            if (load_chain_image(cl_autochain_target) == 0)
+                run_chain_image();
+        }
 
         // When in default baud mode and it's been more than half a second since
         // received a packet, flash the alive heart beat
         if (current_baud == default_baud && tick_ms - last_received_packet_time_ms > 500)
         {
-            const unsigned flash_parity = 1;            // invert flash pattern
-            unsigned insec = tick_ms % 1000;
-            if (insec < 500)
-                set_activity_led(flash_parity);
-            else
-                set_activity_led(((insec / 125) & 1) ^ flash_parity);
+            const unsigned activity_parity = 1;            // invert flash pattern
+            uint32_t activity_pattern = autochain_armed ? 0x140 : 0x280;
+            set_activity_led( (((tick_ms - start_millis) & activity_pattern) == activity_pattern) ^ activity_parity);
         }
     }
 }

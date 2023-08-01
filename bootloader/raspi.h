@@ -36,7 +36,10 @@ void delay_millis(uint32_t millis);
 unsigned mbox_writeread(unsigned nData);
 unsigned get_core_clock();
 unsigned get_board_revision();
+int get_major_model();
+int get_major_model_from_board_revision(uint32_t revision);
 uint64_t get_board_serial();
+size_t get_command_line(char* pBuf, size_t cbBuf);
 
 // Clocks
 unsigned get_clock_freq(uint32_t tag, uint32_t clock_id);
@@ -104,3 +107,4 @@ void uart_send_dec(unsigned int d);
 void set_register_bits(uint32_t volatile* reg, uint32_t set, uint32_t mask);
 bool wait_register_any_set(uint32_t volatile* reg, uint32_t mask, uint32_t timeout_millis);
 bool wait_register_all_clear(uint32_t volatile* reg, uint32_t mask, uint32_t timeout_millis);
+

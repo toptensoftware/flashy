@@ -2,10 +2,12 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <malloc.h>
 #include "raspi.h"
 #include "packenc.h"
 #include "crc32.h"
 #include "diskio.h"
+#include "utils.h"
 #include <ff.h>
 #include "../lib/FFsh/FFsh/src/ffsh.h"
 

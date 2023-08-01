@@ -169,7 +169,7 @@ async function sendImgFile(ctx, imgFile, aarch)
 }
 
 // Check the filename name looks like the right kernel image for the device
-function checkKernel(ping, filename, )
+function checkKernel(ping, filename)
 {
     // Does the filename name look like kernel name?
     if (filename.indexOf('kernel') < 0)

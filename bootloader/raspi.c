@@ -64,6 +64,8 @@ unsigned int ticks()
 
 uint64_t micros()
 {
+    // Important to read LS32 first.  See "64-bit timer read.write" of
+    // https://datasheets.raspberrypi.com/bcm2836/bcm2836-peripherals.pdf
     uint32_t lo = GET32(ARM_SYSTIMER_CLO);
     uint32_t hi = GET32(ARM_SYSTIMER_CHI);
     return ((uint64_t)hi << 32) | lo;
@@ -138,6 +140,7 @@ uint32_t end_of_message_marker
 #define PROPTAG_GET_MIN_CLOCK_RATE	0x00030007
 #define PROPTAG_GET_CLOCK_RATE_MEASURED 0x00030047
 #define PROPTAG_SET_CLOCK_RATE		0x00038002
+#define PROPTAG_GET_COMMAND_LINE	0x00050001
 #define PROPTAG_END		            0x00000000
 
 // Clock IDs
@@ -169,6 +172,59 @@ unsigned mbox_writeread(unsigned nData)
 	while ((nResult & 0xF) != BCM_MAILBOX_PROP_OUT);
 
 	return nResult & ~0xF;
+}
+
+struct SinglePropertyTag
+{
+    uint32_t request_length;
+    uint32_t message_type;
+    uint32_t tag;
+    uint32_t buffer_length;
+    uint32_t return_length;
+} __attribute__((__packed__));
+
+static size_t align(size_t value, int align)
+{
+    value = value + align - 1;
+    return value - value % align;
+}
+
+size_t get_tag(uint32_t tag, void* pBuf, size_t cbBuf)
+{
+    // Buf must be aligned to sizeof(uint32_t)
+    size_t cbBufAligned = align(cbBuf, sizeof(uint32_t));
+
+    // Allocate aligned buffer
+    size_t totalSize = sizeof(struct SinglePropertyTag) + cbBufAligned + sizeof(uint32_t);
+    void* pTags = __builtin_alloca_with_align(totalSize, 16 * 8);
+
+    // Setup request
+    struct SinglePropertyTag* ps = (struct SinglePropertyTag*)pTags;
+    ps->request_length = totalSize;
+    ps->message_type = CODE_REQUEST;
+    ps->tag = tag;
+    ps->buffer_length = cbBufAligned;
+    ps->return_length = 0;
+
+    // Copy request in
+    memcpy(ps + 1, pBuf, cbBuf);
+
+    // Setup end tag
+    uint32_t* pEndTag = (uint32_t*)(((uint8_t*)pTags) + totalSize - sizeof(uint32_t));
+    *pEndTag = PROPTAG_END;
+
+    // Call it
+    mbox_writeread((unsigned)(unsigned long)pTags);
+
+    // Failed?
+    if (ps->message_type != CODE_RESPONSE_SUCCESS)
+        return 0;
+
+    // Copy response out
+    memcpy(pBuf, ps+1, cbBuf);
+
+    // Return the response length
+    return ps->return_length & ~0x80000000;
 }
 
 
@@ -251,6 +307,62 @@ unsigned get_board_revision()
 
     return proptag[5];
 }
+
+int get_major_model()
+{
+    return get_major_model_from_board_revision(get_board_revision());
+}
+
+// Work out the major pi model (1-4) based on revision number
+int get_major_model_from_board_revision(uint32_t revision)
+{
+    // Old revision number?
+    if ((revision & (1 << 23)) == 0)
+        return 1;
+
+    // New revision number
+    switch ((revision >> 4) & 0xFF)
+    {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 6:
+        case 9:
+        case 12:
+            return 1;
+
+        case 4:
+            return 2;
+        
+        case 8:
+        case 10:
+        case 13:
+        case 14:
+        case 16:
+            return 3;
+        
+        case 18:
+        case 17:
+        case 19:
+        case 20:
+        case 21:
+            return 4;
+
+        default:
+            return -1;
+    }
+}
+
+
+size_t get_command_line(char* pBuf, size_t cbBuf)
+{
+    size_t length = get_tag(PROPTAG_GET_COMMAND_LINE, pBuf, cbBuf);
+    if (length < cbBuf)
+        pBuf[length] = '\0';
+    return length;
+}
+
 
 // ------- Clocks -------
 
@@ -937,5 +1049,4 @@ bool wait_register_all_clear(uint32_t volatile* reg, uint32_t mask, uint32_t tim
     }
     return false;
 }
-
 
