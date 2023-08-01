@@ -12,6 +12,8 @@
 // Load chain boot image
 int load_chain_image_file(const char* filename)
 {
+    trace("Loading %s\n", filename);
+
     // Open the file
     FIL file;
     int err = f_open(&file, filename, FA_READ | FA_OPEN_EXISTING);
@@ -49,9 +51,9 @@ const char** kernel_suffixes_for_model(int model)
     static const char* suffixes_2[] = { "7", NULL };
     #if AARCH == 32
     static const char* suffixes_3[] = { "7", "8-32", NULL };
-    static const char* suffixes_4[] = { "8", NULL };
+    static const char* suffixes_4[] = { "7l", NULL };
     #else
-    static const char* suffixes_3[] = { "7l", NULL };
+    static const char* suffixes_3[] = { "8", NULL };
     static const char* suffixes_4[] = { "8-rpi4", NULL };
     #endif
 
