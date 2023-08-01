@@ -127,6 +127,12 @@ let parser = commandLineParser.parser({
             name: "shell",
             help: "Opens an interactive command shell"
         },
+        /*
+        {
+            name: "trace",
+            help: "Display trace messages from bootloader"
+        },
+        */
         ...serial_arg_specs,
         ...common_arg_specs,
         {
