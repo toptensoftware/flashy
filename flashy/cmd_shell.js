@@ -90,7 +90,7 @@ async function run(ctx)
 
     function format_prompt()
     {
-        return chalk.green(`${ping.model.name} (${vol})`) + " " + chalk.cyan(rwd) + "> ";
+        return chalk.green(`${ping.model.name} (aarch${ping.aarch}) (${vol})`) + " " + chalk.cyan(rwd) + "> ";
     }
 
     // Command handler
