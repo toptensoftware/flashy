@@ -133,14 +133,18 @@ static int handle_push_commit_internal(uint32_t seq, const void* p, uint32_t cb)
 
 void handle_push_data(uint32_t seq, const void* p, uint32_t cb)
 {
+    set_activity_led(1);
     int err = handle_push_data_internal(seq, p, cb);
     sendPacket(seq, PACKET_ID_ACK, &err, sizeof(err));
+    set_activity_led(0);
 }
 
 void handle_push_commit(uint32_t seq, const void* p, uint32_t cb)
 {
+    set_activity_led(1);
     int err = handle_push_commit_internal(seq, p, cb);
     sendPacket(seq, PACKET_ID_ACK, &err, sizeof(err));
+    set_activity_led(0);
 }
 
 void reset_push()

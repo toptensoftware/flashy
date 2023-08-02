@@ -60,7 +60,9 @@ static int handle_pull_internal(uint32_t seq, const void* p, uint32_t cb)
         // Read next packet
         uint32_t room = max_packet_size - sizeof(PACKET_PULL_DATA);
         UINT bytes_read;
+        set_activity_led(1);
         err = f_read(&file, pData->data, room, &bytes_read);
+        set_activity_led(0);
         if (err)
         {
             f_close(&file);
