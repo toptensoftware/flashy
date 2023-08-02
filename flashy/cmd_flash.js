@@ -226,6 +226,16 @@ async function run(ctx)
     let port = ctx.port;
     let layer = ctx.layer;
 
+    if (cl.imagefile == null && !cl.bootloader)
+    {
+        throw new Error("Missing argument: .img or .hex file to flash (or --bootloader)")
+    }
+
+    if (cl.imagefile && cl.bootloader)
+    {
+        throw new Error("Conflicting arguments: image file and --bootloader");
+    }
+
     // Send reboot magic
     if (cl.reboot)
     {
@@ -240,6 +250,41 @@ async function run(ctx)
     
     // Wait for device
     let ping = await layer.ping(true);
+
+    // Flashing self?
+    if (cl.imagefile == null && cl.bootloader)
+    {
+        let suffix;
+        switch (ping.model.major)
+        {
+            case 1:
+                suffix = "";
+                break;
+
+            case 2:
+                suffix = "7";
+                break;
+
+            case 3:
+                if (ping.aarch == 32)
+                    suffix = "7";
+                else
+                    suffix = "8";
+                break;
+
+            case 4:
+                if (ping.aarch == 32)
+                    suffix = "7l";
+                else
+                    suffix = "8-rpi4";
+                break;
+        }5
+
+        cl.imagefile = {
+            filename: path.join(path.dirname(__filename), "bootloader_images", "kernel" + suffix + ".img"),
+            kind: "img",
+        }
+    }
 
     // Send image file
     let startAddress = cl.goAddress == null ? 0xFFFFFFFF : cl.goAddress;
@@ -282,8 +327,6 @@ async function run(ctx)
 }
 
 
-
-
 module.exports = {
     synopsis: "Flashes a kernel image to the target device",
     spec: [
@@ -297,7 +340,8 @@ module.exports = {
                 else if (arg.toLowerCase().endsWith('.img'))
                     return { filename: arg, kind: "img" }
                 throw new Error("Image file must be a '.hex' or '.img' file");
-            }
+            },
+            default: null,
         },
         {
             name: "--reboot:<magic>|-r",
@@ -332,6 +376,10 @@ module.exports = {
             name: "--stress:<n>",
             help: "Send data packets N times (for load testing)",
             default: 1,
+        },
+        {
+            name: "--bootloader",
+            help: "Flash the flashy bootloader",
         },
     ],
     run,

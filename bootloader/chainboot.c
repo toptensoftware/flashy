@@ -50,7 +50,7 @@ const char** kernel_suffixes_for_model(int model)
     static const char* suffixes_1[] = { "", NULL };
     static const char* suffixes_2[] = { "7", NULL };
     #if AARCH == 32
-    static const char* suffixes_3[] = { "7", "8-32", NULL };
+    static const char* suffixes_3[] = { "8-32", "7", NULL };
     static const char* suffixes_4[] = { "7l", NULL };
     #else
     static const char* suffixes_3[] = { "8", NULL };

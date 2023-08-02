@@ -1,6 +1,6 @@
 # Flashy
 
-All-In-One bootloader for Raspberry Pi bare metal.
+All-In-One flash, reboot, monitor and file management utility for Raspberry Pi bare metal.
 
 Flashy lets you...
 
@@ -8,15 +8,16 @@ Flashy lets you...
 * send magic reboot strings
 * monitor serial port output
 * manage files on the SD card
+* run an interactive shell to work with files on the SD card
 * transfer files between host computer and SD card
-* chain boot to other kernel images on the SD card
+* chain boot to other kernel images
 
 ... all via a simple serial port connection.
 
 
 ### Version 1
 
-Flashy v1 was heavily based on David Welch's original bootloader program but added 
+Flashy v1 was based on David Welch's original bootloader program but added 
 support for:
 
 * Binary mode transfers (faster than sending .hex file as text)
@@ -41,15 +42,15 @@ for all host to device transmissions.  It also offers several other improvements
 * Includes packaged pre-compiled bootloader images
 * Supports sending `.img` or `.hex` image files
 * Ability to boost device CPU frequency during high baud uploads
-* Kernel filename checks ensure hexfile being uploaded matches the device
-* Strong packet encoding with crc32 and all packets acknowledged by device for rebustness
+* Kernel filename checks ensure the image being uploaded matches the device
+* Strong packet encoding with crc-32 and all packets acknowledged by device for rebustness
 * Stateless device side bootloader for reliable recovery and restart
 * Automatic idle time baud rate and CPU frequency reset (for recovery)    
 * Bootloader version checks ensures flashy script and bootloader image are compatible
 * Configurable packet size and timeout for flexibility with different devices
 * Host side .hex file parsing and re-chunking for packet size balancing and simpler
   device side implementation
-* Self relocating kernel images (about 10k instead of 2Mb)
+* Self relocating bootloader kernel images
 
 ### Version 3
 
@@ -89,7 +90,7 @@ is not 100% backwards compatible with the command line args used in v2).
 ## Installation
 
 Flashy is written in JavaScript and requires NodeJS to be installed. Assuming node and npm are 
-installed, install flashy as follows:
+installed, install Flashy as follows:
 
 ```
 # Windows
@@ -102,8 +103,7 @@ sudo npm install -g @toptensoftware/flashy
 ```
 
 Next you need to copy the bootloader kernel image files along with the other files require to boot 
-([see here](https://github.com/rsta2/circle/blob/master/boot/README)) to the SD card of your Pi.  The
-bootloader kernel images are included with Flashy and can be extracted using the `bootloader` sub-command:
+([see here](https://github.com/rsta2/circle/blob/master/boot/README)) to the SD card of your Pi.  The bootloader kernel images are included with Flashy and can be extracted using the `bootloader` sub-command:
 
 eg: To place a copy of the kernel images in the root of drive D:
 
@@ -111,8 +111,9 @@ eg: To place a copy of the kernel images in the root of drive D:
 flashy bootloader D:\
 ```
 
-Note: the `bootloader` command will overwrite existing files and only includes the kernel image files - 
-you still need to setup the rest of the boot partition yourself, including `config.txt`.
+Note: the `bootloader` command will overwrite existing files and only includes the 
+kernel image files - you still need to setup the rest of the boot partition yourself, 
+including `config.txt`.
 
 Alternatively you can use the `--print` option to get the path to the packaged bootloader
 images and run your own commands to deploy them:
@@ -154,8 +155,8 @@ using the same serial port of `/dev/ttyUSB0`
 flashy /dev/ttyUSB0 reboot "my_magic" flash kernel7.img monitor
 ```
 
-If no sub-command is specified, the default sub-command is `flash` (for backwards compatibility
-with earlier versions).
+If no sub-command is specified, the default sub-command is `flash` (for limited backwards 
+compatibility with earlier versions).
 
 eg:
 
@@ -176,7 +177,7 @@ flashy /dev/ttyUSB0 push cmdline.txt config.txt -- exec "reboot"
 
 ### Command Line Defaults
 
-To save specifying the same serial port options everytime flashy is invoked, you can
+To save specifying the same serial port options everytime Flashy is invoked, you can
 save a set of defaults to the file `~/.flashy.json` (where ~ is your home directory).
 
 The file is a JSON file with options names matching the command line options converted to
@@ -207,7 +208,8 @@ flashy status
 
 ## Uploading Images
 
-Upload an image to the device by specifying the port and image name (either `.hex` or `.img` file):
+Upload an image to the device by specifying the port and image name 
+(either `.hex` or `.img` file):
 
 ```
 flashy /dev/ttyS3 kernel7.hex 
@@ -218,7 +220,7 @@ flashy /dev/ttyS3 kernel7.hex
 Flashy initially connects to the device at 115200 baud.  Once a connection has been established
 a command is sent to the device to change to a faster baud rate for file transfers.  
 
-The upload baud rate is controlled by the `--baud:NNN` option and defaults to 1M baud.
+The transfer baud rate is controlled by the `--baud:NNN` option and defaults to 1M baud.
 
 Most devices can handle faster rates (typically 2M) but the default is 1M to give
 some margin for reliability.  Feel free to experiment with this setting to get faster uploads.
@@ -230,8 +232,8 @@ Sometimes you'll need time between uploading a program image and the program sta
 two ways to do this:
 
 1. Use `--go-delay:NNN` where NNN is the number of milliseconds to stall after
-   the upload, but before starting the program
-2. Use `--no-go` - this will cause the bootloader to accept the uploaded program but doesn't start it. To later manually start the program, use the `go` sub-command.
+   the upload before starting the program
+2. Use `--no-go` to upload the kernel image without starting it. To later manually start the program, use the `go` sub-command.
 
 The `--go-delay` is particularly handy for giving time to start a serial monitor program so the start of the program's debug log isn't missed.
 
@@ -256,9 +258,10 @@ flashy /dev/ttyS3 go
 
 ## Magic Reboots
 
-Flashy can send a "magic reboot" string.  For this to work the currently running image (ie: your
-program) must be monitoring the serial port for the supplied string and be configured to reboot 
-when detected.
+Flashy can send a "magic" reboot string.  
+
+For this to work the currently running image (ie: your program) must be monitoring the 
+serial port for the supplied string and be configured to reboot when detected.
 
 If your project uses Circle, use the [`CSerialDevice::RegisterMagicReceivedHandler`](https://github.com/rsta2/circle/blob/3b6c4a160a6321cb05363aea2010ff0b2d6eb52d/include/circle/serial.h#L122C6-L122C6) 
 method to set this up.
@@ -272,9 +275,7 @@ flashy /dev/ttyS3 reboot myMagicString
 By default reboot strings are sent at 115200 baud.  Use the `--user-baud:NNN` option to 
 change this.
 
-You can combine reboot strings with sending an image in which case the reboot string will be
-sent and once the bootloader is running again the image will be uploaded.
-
+You can combine reboot strings with sending an image.
 
 eg: Reboot the device, and then send kernel7.hex
 
@@ -297,11 +298,11 @@ Flashy includes two different reboot commands that perform slightly different ac
 (ie: your program) should listen for and invoke a reboot.  Typically used to get back to 
 the flashy bootloader to upload a new image. 
 * `flashy exec "reboot"` - executes the shell reboot command that tells the flashy image
-to reboot the device. (see shell commands below).  Typically used to reboot after replacing
-installed kernel images or update config.txt or cmdline.txt.
+to reboot the device (see shell commands below).  Typically used to reboot after replacing
+installed kernel images or updates to config.txt or cmdline.txt.
 
 ie: the first version is used to reboot when your image is running, the second when the 
-flashy bootloader is running
+Flashy bootloader is running.
 
 
 
@@ -327,6 +328,60 @@ or:
 flashy /dev/ttyS3 kernel7.hex --reboot:myMagicString --monitor
 ```
 
+## Bootloader Images
+
+The bootloader images are the Flashy kernel images that need to be installed on the 
+target device for Flashy to communicate with.
+
+The Flashy package includes pre-built bootloader images and the `bootloader` sub-command
+can be used to work with them.
+
+To extract the bootloader images to the current directory:
+
+```
+flashy bootloader
+```
+
+To extract the bootloader images to a specified directory:
+
+```
+flashy bootloader /some/directory/path
+```
+
+To print the path to the packaged bootloader images:
+
+```
+flashy bootloader --print
+```
+
+Also, the `push` and `flash` sub-commands have an option `--bootloader` that can be 
+used to push/flash the latest bootloader images to a device.
+
+eg: 
+
+```
+flashy /dev/ttyUSB0 exec "mkdir -p /sd/flashy3/"
+flashy /dev/ttyUSB0 push --bootloader --to:/sd/flashy3/
+```
+
+To update a device that's running an earlier build of Flashy v3
+you can use this command:
+
+```
+flashy /dev/ttyUSB0 push --bootloader --no-version-check -- reboot
+```
+
+To update a device that's running Flashy v2, you can do this:
+
+```
+# Flash the current Flashy bootloader image (to memory)
+flashy /dev/ttyUSB0 flash --bootloader --no-version check
+
+# Now push the bootloader kernel images to the SD card and reboot
+flashy /dev/ttyUSB0 push --bootloader -- reboot
+```
+
+
 
 ## Activity LED
 
@@ -350,7 +405,7 @@ beat indicator will re-appear.
 
 Flashy v3 introduces the ability to work with files on the Pi's SD card.  
 
-The file system is configured to use a Linux style file system and the SD card is 
+The file system is configured to use a Linux-like file paths and the SD card is 
 "mounted" in the sub-directory `/sd`. DOS/Windows style drive letters are not supported.
 
 The file commands prefer forward slashes `/` for directory separators, but also accept 
@@ -368,13 +423,13 @@ File and directory names are case-insensitive.  Only the default root partition 
 
 The `pull` and `push` commands can be used to transfer files to/from the SD card of the device:
 
-eg: transfer the file `log.txt` from the device:
+eg: retrieve the file `log.txt` from the device:
 
 ```
 flashy /dev/ttyUSB0 pull log.txt
 ```
 
-eg: transfer the file `cmdline.txt` to the device:
+eg: send the file `cmdline.txt` to the device:
 
 ```
 flashy /dev/ttyUSB0 push cmdline.txt
@@ -383,7 +438,7 @@ flashy /dev/ttyUSB0 push cmdline.txt
 The `push` and `pull` commands both accept wildcard characters.  The `pull` command
 also accepts brace expansion (eg: `/sd/images/*.{png,jpg}`).  
 
-Both commands also accept a list of files to transfer:
+Both commands can accept a multiple files to transfer:
 
 ```
 flashy /dev/ttyUSB0 pull log.txt debug-log.txt output.data
@@ -399,14 +454,14 @@ flashy /dev/ttyUSB0 pull log.txt --to:./logs/
 
 ### Working with Wildcards
 
-When passing file names to the flashy command line utility care needs to be
+When passing file names to the Flashy command line utility care needs to be
 taken to escape names that should be resolved on the device and not on the host.
 
-Since most linux style shells (eg: bash) expand command line arguments before passing
+Since most Linux style shells (eg: bash) expand command line arguments before passing
 them to the program, you'll need to escape device side file names to prevent the 
-shell from trying to expand them relative to the host file system.
+shell from trying to resolve them against the host file system.
 
-eg: this command may not do what you intend since the shell will expand *.png
+eg: this command may not do what you intend since the shell will try to expand `*.png`
 to match files in the current directory.
 
 ```
@@ -421,7 +476,7 @@ flashy /dev/ttyUSB0 pull "*.png"
 
 ### Shell Commands
 
-Flashy v3 supports a simple set of Linux style shell commands for working with files on the 
+Flashy v3 supports a simple set of Linux like shell commands for working with files on the 
 SD card.
 
 Use the `exec` sub-command to invoke a shell command:
@@ -433,12 +488,12 @@ flashy /dev/ttyUSB0 exec "ls -al"
 ```
 
 Note the command to be invoked must be quoted (or escaped) so the whole command is
-passed to flashy as a single command line argument.
+passed to Flashy as a single command line argument.
 
 Commands that expect path names will also accept wildcards (`*` and `?`) and simple brace
 expansions (`{png,jpg}`).  
 
-Multiple commands can be grouped using the `&&`, `||` and `;` operators:
+Multiple commands can be specified using the `&&`, `||` and `;` operators:
 
 ```
 flashy /dev/ttyUSB0 exec "cd temp && rm -rf *"
@@ -449,7 +504,7 @@ Redirection and piping is not supported.
 The following commands are supported:
 
 * `cat <files>`
-* `chain <imagefile>`
+* `chain <imageFileOrDirectory>`
 * `cd <directory>`
 * `cp <paths> <target> [-r|--recursive] [-n|--no-clobber]`
 * `date`
@@ -479,7 +534,8 @@ shell:
 ```
 
 You'll be presented with a prompt showing the connected Pi model, current
-architecure (eg: `aarch32`), the label of the root partition on the SD card (eg: `DEV`) and the current remote working directory (eg: `/sd`)
+architecure (eg: `aarch32`), the label of the root partition on the SD card
+(eg: `DEV`) and the current remote working directory (eg: `/sd`)
 
 ```
 Raspberry Pi 3 Model B+ (aarch32) (DEV) /sd> 
@@ -508,29 +564,58 @@ A chain boot can be invoked manually using the `chain` shell comamnd:
 flashy /dev/ttyUSB0 exec "chain someKernelImage.img"
 ```
 
+You can also automatically load an image appropriate for the current device 
+model/architecture using a wildcard character which will be replaced with the
+appropriate suffix:
+
+eg:  `chain kernel*.img` the command below will load different images on 
+different device types:
+
+* Pi 1 - kernel.img
+* Pi 2 - kernel7.img
+* Pi 3 (aarch32) - kernel8-32.img or if not found, kernel7.img
+* Pi 3 (aarch64) - kernel8.img
+* Pi 4 (aarch32) - kernel7l.img
+* Pi 4 (aarch64) - kernel8-rpi4.img
+
+
+You can also use the chain command with a directory.  
+
+eg: `/sd/myApp/` is equivalent to `/sd/myApp/kernel*.img`:
+
+```
+flashy /dev/ttyUSB0 exec "chain /sd/myApp/"
+```
+
 
 ### Automatic Chain Booting
 
 Automatic chain booting lets you chain boot from Flashy's bootloader into another 
-kernel if no serial port activity is detected for a period of time after boot.
+kernel if no serial port activity is detected within a period of time after boot.
 
 Automatic chain booting is configured in the standard Pi `cmdline.txt` file using 
 the `flashy.autochain` option.
 
-For example adding this option to `cmdline.txt` (and assuming flashy is installed 
-as the default boot kernel on the device) would cause flashy to load and wait 10 
+For example adding this option to `cmdline.txt` (and assuming Flashy is installed 
+as the default boot kernel on the device) would cause Flashy to load and wait 10 
 seconds before passing control to `someKernelImage.img`.
 
 ```
 flashy.autochain=10,/sd/someKernelImage.img
 ```
 
-If flashy receives any serial port packets before the 10 seconds elapses, it will
-disable the auto chain and remain active.
+The value comprises two parts separated by a comma:
+
+* The number of seconds to delay (or use unit suffixes the same as the `sleep` shell command)
+* The image to load.  Supports the same wildcard/directory as the `chain` command
+but the path must be fully qualified including the `/sd` prefix
+
+If flashy receives any serial port packets before the timeout elapses, it will
+disable auto chain and enter its normal idle state.
 
 By combining auto chain booting and magic reboot strings you can have the device 
 automatically boot into a custom image, but be able to intercept the boot with 
-flashy when needed.
+Flashy when needed.
 
 For example this command will reboot your running image by sending a magic reboot
 string and then open a flashy command shell (which will also prevent the auto-chain 
@@ -547,10 +632,16 @@ image and reboot the device again (to load the new kernel)
 flashy /dev/ttyUSB0 reboot myMagicString push kernel7.img -- exec "reboot"
 ```
 
-or:
+or chain directly to the pushed image:
 
 ```
 flashy /dev/ttyUSB0 reboot myMagicString push kernel7.img -- exec "chain kernel7.img"
+```
+
+or push all images and chain to the appropriate one:
+
+```
+flashy /dev/ttyUSB0 reboot myMagicString push kernel*.img -- exec "chain ."
 ```
 
 ## Miscellanous
@@ -620,7 +711,7 @@ There's a couple of solutions for this:
 * Install Flashy on both the Windows host and the WSL2 operating system and let it find itself.
 
 When flashy is launched in a WSL-2 environment with a `/dev/ttyS*` serial port name it will
-attempt to relaunch itself as a Windows process where it does have access to the COM ports. 
+attempt to relaunch itself as a Windows process where it has access to the COM ports. 
 
 For this to work, Flashy needs to be installed as an npm global tool on both the Windows host
 machine and the WSL guest operating system.
@@ -642,7 +733,7 @@ Previous versions of the bootloader kernel images included a 2Mb buffer to reser
 uploaded (aka flashed) image.  The made the kernel images unnecessarily large (over 2Mb each), 
 slower to load and limited flashed images to 2M.
 
-Flashy v2 has self relocating kernel images of less than 10Kb each. They load quickly and 
+Flashy v2 has self relocating kernel images that are much smaller. They load quickly and 
 allow for flashed images up to about 120Mb - which should be more than enough for even the largest projects.
 
 This also means Flashy can be used to flash itself :)

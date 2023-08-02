@@ -13,7 +13,7 @@
             "type": "node",
             "program": "${workspaceFolder}/flashy/flashy.js",
             "args": [
-                "-v", "reboot", "ccw_tada",
+                "flash", "--bootloader"
             ],
             "console": "externalTerminal"
         }

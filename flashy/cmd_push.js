@@ -108,6 +108,11 @@ async function run(ctx)
     await ctx.layer.ping(ctx.cl.verbose);
     await ctx.layer.boost(ctx.cl);
 
+    if (ctx.cl.bootloader)
+    {
+        ctx.cl.files.push(path.join(path.dirname(__filename), "bootloader_images", "kernel*.img"))
+    }
+
     // Expand files
     let files = argUtils.expandArgs(ctx.cl.files);
     
@@ -167,6 +172,10 @@ module.exports = {
             name: "<files>",
             help: "The files to push",
             default: [],
+        },
+        {
+            name: "--bootloader",
+            help: "Push the bootloader images",
         },
         {
             name: "--to:<target>",
