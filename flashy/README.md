@@ -288,8 +288,7 @@ flashy /dev/ttyUSB0 reboot myMagicString
 By default reboot strings are sent at 115200 baud.  Use the `--user-baud:NNN` option to 
 change this.
 
-You can combine reboot strings with sending an image to reboot the device, and then send
-a kernel image:
+You can combine reboot strings with sending an image:
 
 ```
 flashy /dev/ttyUSB0 reboot myMagicString flash kernel7.hex
@@ -323,7 +322,7 @@ Flashy bootloader is running.
 
 Flashy includes a simple serial port monitor that can show any text output by the device.
 
-Monitoring is done at the `--user-baud:NNN` baud rate (by default 115200)
+Monitoring is done at the `--user-baud:NNN` baud rate (by default 115200).
 
 Start the this with the `monitor` sub-command or the `--monitor` option to the `flash` sub-command.
 
