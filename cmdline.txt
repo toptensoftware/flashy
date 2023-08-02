@@ -1,1 +1,1 @@
-logdev=ttyS1 flashy.autochain=10,/sd/blink/
+logdev=ttyS1 xflashy.autochain=10,/sd/blink/

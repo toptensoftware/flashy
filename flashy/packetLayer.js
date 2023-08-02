@@ -286,13 +286,16 @@ function layer(port, options)
     // Create packet decoder
     let decoder = packenc.decode(onPacket, onPacketError, options.max_packet_size);
 
-    // Read data from serial and pump it through the packet decoder
-    port.read(function(data) {
+    function read_handler(data)
+    {
         for (let i=0; i<data.length; i++)
         {
             decoder(data[i]);
         }
-    });
+    }
+
+    // Read data from serial and pump it through the packet decoder
+    port.read(read_handler);
 
     function format_hex(val, digits)
     {

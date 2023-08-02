@@ -222,6 +222,7 @@ function serialPort(serialPortName, options)
         write,
         read,
         writeSlow,
+        get portName() { return serialPortName } 
     }
     
 }
