@@ -129,12 +129,12 @@ cp --no-clobber `flashy bootloader --print`/*.img /mnt/sdcard
 
 Next, you need to connect the Pi's serial port to your PC - [see here](https://www.jeffgeerling.com/blog/2021/attaching-raspberry-pis-serial-console-uart-debugging).
 
-    ![Wiring](https://www.jeffgeerling.com/sites/default/files/images/raspberry-pi-serial-cable-connection.png)
+![Wiring](https://www.jeffgeerling.com/sites/default/files/images/raspberry-pi-serial-cable-connection.png)
 
 
 ### Boot and Test
 
-Next boot the device from the SD card and confirm it's running by looking for a heart beat pattern on the activity LED. You can also confirm the serial connection with the `status`
+Finally, boot the device from the SD card and confirm it's running by looking for a heart beat pattern on the activity LED. You can also confirm the serial connection with the `status`
 sub-command:
 
 ```
@@ -582,8 +582,7 @@ You can also automatically load an image appropriate for the current device
 model/architecture using a wildcard character which will be replaced with the
 appropriate suffix:
 
-eg:  `chain kernel*.img` the command below will load different images on 
-different device types:
+eg:  `chain kernel*.img` will load an image appropriate to the device:
 
 * Pi 1 - kernel.img
 * Pi 2 - kernel7.img
