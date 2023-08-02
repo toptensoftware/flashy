@@ -60,9 +60,6 @@ void sendPacket(uint32_t seq, uint32_t id, const void* pData, uint32_t cbData)
 // Receive a packet from the host
 void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cb)
 {
-    // Store packet time
-    last_received_packet_time_ms = millis();
-
     // Disarm autochain once a packet is received
     autochain_armed = false;
 
@@ -102,7 +99,11 @@ void onPacketReceived(uint32_t seq, uint32_t id, const void* p, uint32_t cb)
             handle_command(seq, p, cb);
             break;
     }
+
+    // Store packet time
+    last_received_packet_time_ms = millis();
 }
+
 
 // Callback to handle packet decode errors
 // Just pass to host for informational/debugging purposes
@@ -141,7 +142,7 @@ int main()
     // Main loop
     while (true)
     {
-        // Read serial bytes into fifo
+        // Read serial bytes
         int recv_byte;
         while ((recv_byte = uart_try_recv()) >= 0)
             packet_decode(&ctx, recv_byte);
