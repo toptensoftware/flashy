@@ -240,9 +240,11 @@ async function run(ctx)
     if (cl.reboot)
     {
         await port.switchBaud(cl.userBaud);
-        process.stdout.write(`Sending reboot magic '${cl.reboot}'...`)
+        if (cl.verbose)
+            process.stdout.write(`Sending reboot magic '${cl.reboot}'...`)
         await port.write(cl.reboot);
-        process.stdout.write(` ok\n`);
+        if (cl.verbose)
+            process.stdout.write(` ok\n`);
     }
 
     // Set default baud
