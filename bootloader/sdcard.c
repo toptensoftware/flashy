@@ -627,7 +627,8 @@ int reset_sdcard_internal()
     //uint32_t ocr = (*EMMC_RESP0 >> 8) & 0xFFFF;
     g_is_sdhc = ((*EMMC_RESP0 >> 30) & 0x01) != 0;
     //bool can18v = ((*EMMC_RESP0 >> 24) & 0x01) != 0;
-    TRACE("OCR: %08x %s %s\n", ocr, g_is_sdhc ? "sdhc" : "sdsc", can18v ? "1.8v" : "not 1.8v");
+    //TRACE("OCR: %08x %s %s\n", ocr, g_is_sdhc ? "sdhc" : "sdsc", can18v ? "1.8v" : "not 1.8v");
+    TRACE("SDHC: %s\n", g_is_sdhc ? "yes" : "no");
 
     // Switch to 25Mhz
     TRACE("Switching to 25Mhz\n");
