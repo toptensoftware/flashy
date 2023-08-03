@@ -162,6 +162,10 @@ let parser = commandLineParser.parser({
             name: "--cwd:<dir>",
             help: "Change current directory",
         },
+        {
+            name: "--ensure-version:<ver>",
+            help: "Abort if Flashy version doesn't match",
+        }
     ]
 });
 
@@ -182,6 +186,20 @@ if (!cl.$command)
 if (!cl.$command)
     cl.$command = "flash";
 
+// Check WSL and host versions match
+if (cl.ensureVersion)
+{
+    let version = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')), "utf8").version;
+    if (version != cl.ensureVersion)
+    {
+        process.stdout.write(`Flashy version mismatch (requested: ${cl.ensureVersion} actual: ${version})\n`);
+        process.stdout.write(`Please ensure you've got the same version of Flashy installed on WSL and\n`);
+        process.stdout.write(`on the Windows host.\n`)
+        process.exit(7);
+    }
+
+}
+
 // Change working directory?
 if (cl.cwd)
     process.chdir(cl.cwd);
@@ -198,7 +216,7 @@ if (cl.cwd)
         let command = cl.$command;
         delete cl.$tail;
         delete cl.$command;
-        while (true)
+        while (args)
         {
             // Load the command handler
             let command_handler = require(`./cmd_${command}`);
@@ -237,6 +255,7 @@ if (cl.cwd)
             // Next command
             commands.push(ctx);
 
+            // Process next command
             if (ctx.cl.$tail)
             {
                 // Parse next command name
@@ -302,6 +321,11 @@ if (cl.cwd)
             // Disconnect packet layer from socket
             if (ctx.port)
                 ctx.port.read(null);
+        }
+
+        if (commands.length == 0 && cl.verbose)
+        {
+            process.stdout.write("Nothing to do.\n")
         }
     }
     catch (err)

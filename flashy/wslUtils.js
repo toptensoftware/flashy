@@ -47,6 +47,8 @@ function runSelfUnderWindows()
 
     // Find current directory as UNC path
     let uncHere =  run("wslpath -w .").trim();
+    let ver = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')), "utf8").version;
+
 
     // Note the CWD trickery below is to prevent CMD.EXE spitting out a warning about
     // UNC paths not supported as the current directory.  Change current directory
@@ -56,7 +58,7 @@ function runSelfUnderWindows()
     // Respawn self
     let r = child_process.spawnSync(
         "cmd.exe",
-        [ "/c", cmd, `--cwd:${uncHere}`, ...process.argv.slice(2)],
+        [ "/c", cmd, `--cwd:${uncHere}`, `--ensure-version:${ver}`, ...process.argv.slice(2)],
         {
             stdio: 'inherit', 
             shell: false,
