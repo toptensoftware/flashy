@@ -175,7 +175,7 @@ int main()
             // Make sure SD card mounted
             mount_sdcard();
 
-            if (load_chain_image(cl_autochain_target) == 0)
+            if (load_chain_image(cl_autochain_target, NULL) == 0)
                 run_chain_image();
         }
 

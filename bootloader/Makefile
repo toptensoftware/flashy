@@ -1,4 +1,4 @@
-PLATFORM ?= rpi2
+PLATFORM ?= rpi3-64
 
 # Override ARCHFLAGS as CPU not setup for all instructions sets
 ARCHFLAGS=-DBOOTLOADER

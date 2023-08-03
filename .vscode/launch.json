@@ -13,7 +13,7 @@
             "type": "node",
             "program": "${workspaceFolder}/flashy/flashy.js",
             "args": [
-                "flash", "--bootloader"
+                "shell"
             ],
             "console": "externalTerminal"
         }

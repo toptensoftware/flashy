@@ -10,7 +10,7 @@
 
 
 // Load chain boot image
-int load_chain_image_file(const char* filename)
+int load_chain_image_file(const char* filename, void (*progress)())
 {
     trace("Loading %s\n", filename);
 
@@ -25,8 +25,10 @@ int load_chain_image_file(const char* filename)
     // Read file
     UINT bytes_read;
     uint8_t* p = (uint8_t*)(size_t)BASE_ADDRESS;
+    int led = 0;
     while (true)
     {
+        set_activity_led(led ^= 1);
         err = f_read(&file, p, 4096, &bytes_read);
         if (err)
             break;
@@ -35,7 +37,10 @@ int load_chain_image_file(const char* filename)
             break;
 
         p += bytes_read;
+        if (progress)
+            progress();
     }
+    set_activity_led(0);
     f_close(&file);
 
     if (err)
@@ -67,7 +72,7 @@ const char** kernel_suffixes_for_model(int model)
     return NULL;
 }
 
-int load_chain_image(const char* path)
+int load_chain_image(const char* path, void (*progress)())
 {
     // Work buffer
     char sz[512];
@@ -94,7 +99,7 @@ int load_chain_image(const char* path)
             strcat(sz, pszStar + 1);
 
             // Try loading it
-            int err = load_chain_image_file(sz);
+            int err = load_chain_image_file(sz, progress);
             if (err == 0)
                 return 0;
 
@@ -117,12 +122,12 @@ int load_chain_image(const char* path)
         // Yes, look for "kernel*.img"
         strcpy(sz, path);
         pathcat(sz, "kernel*.img");
-        return load_chain_image(sz);
+        return load_chain_image(sz, progress);
     }
     else
     {
         // No, just load it
-        return load_chain_image_file(path);
+        return load_chain_image_file(path, progress);
     }
 }
 
