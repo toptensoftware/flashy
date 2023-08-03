@@ -51,7 +51,7 @@ function findLastArg(line)
             case ')':
                 i++;
                 lastArgPos = i;
-                return;
+                break;
 
             default:
                 i++;
