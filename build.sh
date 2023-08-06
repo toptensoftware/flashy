@@ -6,7 +6,7 @@ if git commit --dry-run -a > /dev/null; then
 fi
     
 # Clock version number
-(cd flashy ; npm version patch)
+(cd flashy ; npm version prerelease --preid=alpha)
 
 # Build bootloader
 (cd bootloader ; make aarch -B)
