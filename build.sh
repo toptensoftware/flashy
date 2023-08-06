@@ -1,18 +1,24 @@
 #!/bin/bash
 
-if git commit --dry-run -a > /dev/null; then
-    echo "Uncommitted changes"
-    exit
-fi
+#if git commit --dry-run -a > /dev/null; then
+#    echo "Uncommitted changes"
+#    exit
+#fi
     
 # Clock version number
-(cd flashy && npm version prerelease --preid=alpha)
+pushd flashy
+npm version prerelease --preid=alpha
+popd
 
 # Build bootloader
-(cd bootloader && make aarch -B)
+pushd bootloader
+cd bootloader && make aarch -B
+popd
 
 ## Package it
-(cd flashy && npm publish --access public)
+pushd flashy
+cd flashy && npm publish --access public
+popd
 
 # Commit
 VERSION=`node -p require\(\"./flashy/package.json\"\).version`
