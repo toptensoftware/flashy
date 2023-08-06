@@ -356,12 +356,7 @@ module.exports = {
             default: false, 
         },
         {
-            name: "--user-baud:<n>",
-            help: "Baud rate for monitor and reboot magic (default=115200)",
-            default: 115200,
-        },
-        {
-            name: "--go-delay:<ms>|-d",
+            name: "--go-delay:<ms>|--goDelay:<ms>|-d",
             help: "Introduces a delay before starting the flashed image",
             parse: commandLineParser.parse_integer(0),
             default: 300,

@@ -99,12 +99,12 @@ let serial_arg_specs = [
         help: "Don't check bootloader version on device",
     },
     {
-        name: "--baud:<n>|--flash-baud:<n>|-b",
+        name: "--baud:<n>|--flashBaud:<n>|-b",
         help: "Baud rate for flashing and push/pull (default=1000000)",
         default: 1000000,
     },
     {
-        name: "--user-baud:<n>",
+        name: "--user-baud:<n>|--userBaud:<n>",
         help: "Baud rate for monitoring and sending reboot magic (default=115200)",
         default: 115200,
     },
