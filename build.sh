@@ -6,13 +6,13 @@ if git commit --dry-run -a > /dev/null; then
 fi
     
 # Clock version number
-(cd flashy ; npm version prerelease --preid=alpha)
+(cd flashy && npm version prerelease --preid=alpha)
 
 # Build bootloader
-(cd bootloader ; make aarch -B)
+(cd bootloader && make aarch -B)
 
 ## Package it
-(cd flashy ; npm publish --access public)
+(cd flashy && npm publish --access public)
 
 # Commit
 VERSION=`node -p require\(\"./flashy/package.json\"\).version`
