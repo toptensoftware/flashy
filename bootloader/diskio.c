@@ -8,6 +8,9 @@
 
 const char* VolumeStr[FF_VOLUMES] = { "sd" };
 
+uint64_t disk_read_time = 0;
+uint64_t disk_write_time = 0;
+
 // FatFS file system object
 FATFS g_fs;
 
@@ -23,7 +26,9 @@ DSTATUS disk_status(BYTE pdrv)
 
 DRESULT disk_read(BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 {
+    uint64_t start_time = micros();
     int err = read_sdcard(sector, count, buff);
+    disk_read_time += micros() - start_time;
     if (err)
     {
         return RES_ERROR;
@@ -34,7 +39,9 @@ DRESULT disk_read(BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 
 DRESULT disk_write(BYTE pdrv, const BYTE* buff, LBA_t sector, UINT count)
 {
+    uint64_t start_time = micros();
     int err = write_sdcard(sector, count, buff);
+    disk_write_time += micros() - start_time;
     if (err)
     {
         return RES_ERROR;

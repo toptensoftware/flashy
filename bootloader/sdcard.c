@@ -6,8 +6,13 @@
 // https://datasheets.raspberrypi.com/bcm2835/bcm2835-peripherals.pdf
 
 // Trace and Error Logging (disabled)
-#define ERROR(fmt, ...) { }
+//#define ERROR(fmt, ...) { }
 #define TRACE(fmt, ...) { }
+//#define INFO(fmt, ...) {}
+
+void trace(const char* format, ...);
+#define INFO trace
+#define ERROR trace
 
 // Global variables
 static uint32_t g_rca = 0;          // RCA address of initialized card (0 if not initialized)
@@ -237,7 +242,7 @@ static uint32_t calc_clock_divider(uint32_t base, uint32_t target)
 // more than the requested.
 static int set_emmc_freq(uint32_t freq)
 {
-    TRACE("Setting EMMC clock to %iHz...\n", freq);
+    INFO("Setting EMMC clock to %iHz...\n", freq);
 
     // Get clock
     uint32_t clock_freq = get_emmc_freq();
@@ -246,11 +251,11 @@ static int set_emmc_freq(uint32_t freq)
         ERROR("Failed to get emmc clock frequency\n");
         return E_SD_NO_CLOCK;
     }
-    TRACE("EMMC Clock: %iMHz\n", clock_freq);
+    INFO("EMMC Clock: %iMHz\n", clock_freq);
 
     // Calculate divider
     uint32_t divider = calc_clock_divider(clock_freq, freq);
-    TRACE("EMMC clock divider is %i giving actual frequency of %iHz\n", divider, clock_freq/divider);
+    INFO("EMMC clock divider is %i giving actual frequency of %iHz\n", divider, clock_freq/divider);
 
     // Rearrange the divider as required by the register
     // value[2..1] => 7..6  value[8..1] => 15..8 value[0] => discarded
@@ -280,7 +285,7 @@ static int set_emmc_freq(uint32_t freq)
     set_register_bits(EMMC_CONTROL1, CONTROL1_CLK_EN, CONTROL1_CLK_EN );
     delay_micros(5000);
 
-    TRACE("Clock enabled\n");
+    INFO("Clock enabled\n");
 
     // Done!
     return 0;
@@ -518,14 +523,14 @@ int sd_version_from_scr(uint32_t scr)
 // Reset the SD card
 int reset_sdcard_internal()
 {
-    TRACE("Resetting SD card...\n");
+    INFO("Resetting SD card...\n");
 
     // Clear the card address
     g_rca = 0;
 
     // Read the controller version
 	uint32_t sdVersion = (*EMMC_SLOTISR_VER >> 16) & 0xff;
-    TRACE("SD version: %i\n", sdVersion);
+    INFO("SD version: %i\n", sdVersion);
     if (sdVersion < 2)
     {
         ERROR("Unsupported SD version %i\n", sdVersion);
@@ -545,14 +550,14 @@ int reset_sdcard_internal()
 
     // Enable VDD1 bus power 3.3V
 #if RASPI >= 4
-    TRACE("Enabling power bus 3.3V\n");
+    INFO("Enabling power bus 3.3V\n");
     set_register_bits(EMMC_CONTROL0, 0x0F << 8, 0x0F << 8);
     delay_micros(3000);
 #endif
 
     // Check for valid card
     /*
-    TRACE("Checking for valid card\n");
+    INFO("Checking for valid card\n");
     if (!wait_register_any_set(EMMC_STATUS, STATUS_CARD_INSERTED, TIMEOUT))
     {
         ERROR("Timeout waiting for card inserted\n");
@@ -581,7 +586,7 @@ int reset_sdcard_internal()
     *EMMC_BLKSIZECNT = 0;
 
     // Go to idle state
-    TRACE("Sending CMD_GO_IDLE_STATE\n");
+    INFO("Sending CMD_GO_IDLE_STATE\n");
     err = issue_command(CMD_GO_IDLE_STATE, 0);
     if (err)
         return err;
@@ -589,7 +594,7 @@ int reset_sdcard_internal()
     // Send voltage check command
     // 0x100 = low voltage bit
     // 0x0AA = check pattern
-    TRACE("Sending CMD_SEND_IF_COND\n");
+    INFO("Sending CMD_SEND_IF_COND\n");
     err = issue_command(CMD_SEND_IF_COND, 0x1AA);
     if (err)
         return err;
@@ -606,7 +611,7 @@ int reset_sdcard_internal()
     }
 
     // Request operating conditions
-    TRACE("Sending ACMD_SEND_OP_COND\n");
+    INFO("Sending ACMD_SEND_OP_COND\n");
     while (true)
     {
         err = issue_command(ACMD_SEND_OP_COND, 
@@ -627,17 +632,17 @@ int reset_sdcard_internal()
     //uint32_t ocr = (*EMMC_RESP0 >> 8) & 0xFFFF;
     g_is_sdhc = ((*EMMC_RESP0 >> 30) & 0x01) != 0;
     //bool can18v = ((*EMMC_RESP0 >> 24) & 0x01) != 0;
-    //TRACE("OCR: %08x %s %s\n", ocr, g_is_sdhc ? "sdhc" : "sdsc", can18v ? "1.8v" : "not 1.8v");
-    TRACE("SDHC: %s\n", g_is_sdhc ? "yes" : "no");
+    //INFO("OCR: %08x %s %s\n", ocr, g_is_sdhc ? "sdhc" : "sdsc", can18v ? "1.8v" : "not 1.8v");
+    INFO("SDHC: %s\n", g_is_sdhc ? "yes" : "no");
 
     // Switch to 25Mhz
-    TRACE("Switching to 25Mhz\n");
+    INFO("Switching to 25Mhz\n");
     err = set_emmc_freq(25000000);
     if (err)
         return err;
 
     // Request CID
-    TRACE("Requesting CID\n");
+    INFO("Requesting CID\n");
     err = issue_command(CMD_ALL_SEND_CID, 0);
     if (err)
         return err;
@@ -647,11 +652,11 @@ int reset_sdcard_internal()
     uint32_t cid1 = *EMMC_RESP1;
     uint32_t cid2 = *EMMC_RESP2;
     uint32_t cid3 = *EMMC_RESP3;
-    TRACE("CID: %08x.%08x.%08x.%08x\n", cid0, cid1, cid2, cid3);
+    INFO("CID: %08x.%08x.%08x.%08x\n", cid0, cid1, cid2, cid3);
     */
 
     // Request relative address
-    TRACE("Requesting Relative Address\n");
+    INFO("Requesting Relative Address\n");
     err = issue_command(CMD_SEND_RELATIVE_ADDRESS, 0);
     if (err)
         return err;
@@ -664,10 +669,10 @@ int reset_sdcard_internal()
         return E_SD_RCA_ERROR;
     }
     g_rca = (*EMMC_RESP0 >> 16) & 0xFFFF;
-    TRACE("Relative address: %04x\n", g_rca);
+    INFO("Relative address: %04x\n", g_rca);
 
     // Select Card
-    TRACE("Selecting Card\n");
+    INFO("Selecting Card\n");
     err = issue_command(CMD_SELECT_CARD, g_rca << 16);
     if (err)
         return err;
@@ -688,28 +693,29 @@ int reset_sdcard_internal()
     }
 
     // Get the cards SCR
-    TRACE("Getting SCR\n");
+    INFO("Getting SCR\n");
     uint32_t scr[2];
     scr[0] = 0xBAADF00D;
     scr[1] = 0xBAADF00D;
     err = issue_read_command(ACMD_SEND_SCR, 0, &scr, 8, 1);
     if (err)
         return err;
-    TRACE("SCR: %.8x %.8x\n", scr[0], scr[1]);
+    INFO("SCR: %.8x %.8x\n", scr[0], scr[1]);
 
     // Crack SD version
     uint32_t sdVer = sd_version_from_scr(scr[0]);
-    TRACE("SD version: %i.%i\n", (sdVer >> 4) & 0x0f, sdVer & 0x0f);
+    INFO("SD version: %i.%i\n", (sdVer >> 4) & 0x0f, sdVer & 0x0f);
 
     // Crack bus widths
     uint32_t busWidths = (scr[0] >> (48 - 32)) & 0xf;
-    TRACE("Supported bus widths: 0x%08x\n", busWidths);
+    INFO("Supported bus widths: 0x%08x\n", busWidths);
 
     // Try to switch to high speed mode
     // Section 4.3.10 (p78)
+    /*
     if (sdVer >= 0x11)
     {
-        TRACE("Checking for high-speed mode\n");
+        INFO("Checking for high-speed mode\n");
 
         // Get switch data
         uint8_t switch_data[64] __attribute__((aligned(16)));
@@ -720,7 +726,7 @@ int reset_sdcard_internal()
         // Does card support high speed mode?
         if (switch_data[13] & 0x01)
         {
-            TRACE("High speed mode supported, enabling...\n");
+            INFO("High speed 50MHz mode supported, enabling...\n");
             issue_read_command(CMD_SWITCH_FUNCTION, 0x80FFFFF1, switch_data, sizeof(switch_data), 1);
             if (err)
                 return err;   
@@ -729,14 +735,15 @@ int reset_sdcard_internal()
             delay_micros(10);
             set_emmc_freq(50000000);
 
-            TRACE("Successfully switched to high speed mode\n");
+            INFO("Successfully switched to high speed mode\n");
         }
     }
+    */
 
     // Switch to 4-bit bus?
     if (busWidths & SD_BUS_WIDTH_4)
     {
-        TRACE("Switching to 4-bit bus\n");
+        INFO("Switching to 4-bit bus\n");
         err = issue_command(ACMD_SET_BUS_WIDTH, 2);
         if (err)
             return err;
@@ -746,7 +753,7 @@ int reset_sdcard_internal()
     }
 
     // Success
-    TRACE("SD Reset Finished\n");
+    INFO("SD Reset Finished\n");
     return 0;
 }
 

@@ -24,6 +24,8 @@ uint32_t original_cpu_freq = 0;
 uint32_t min_cpu_freq = 0;
 uint32_t max_cpu_freq = 0;
 
+uint64_t serial_write_time = 0;
+
 // Set when autochain is pending
 bool autochain_armed = false;
 
@@ -53,7 +55,9 @@ void send_byte(uint8_t byte)
 // Send a packet to the host
 void sendPacket(uint32_t seq, uint32_t id, const void* pData, uint32_t cbData)
 {
+    uint64_t start = micros();
     packet_encode(send_byte, seq, id, pData, cbData);
+    serial_write_time += micros() - start;
 }
 
 

@@ -25,6 +25,13 @@ extern uint32_t reset_timeout_millis;
 extern uint32_t original_cpu_freq;
 extern unsigned current_baud;
 
+extern uint64_t last_disk_read_time;
+extern uint64_t last_disk_write_time;
+extern uint64_t last_elapsed_time;
+extern uint64_t last_serial_write_time;
+
+extern uint64_t serial_write_time;
+
 // Packets ID
 enum PACKET_ID
 {
@@ -64,3 +71,4 @@ void finish_handle_command(struct PROCESS* proc);
 // Shell command handlers
 int cmd_reboot(struct PROCESS* proc);
 int cmd_chain(struct PROCESS* proc);
+int cmd_time(struct PROCESS* proc);

@@ -2,10 +2,16 @@
 #include "common.h"
 #include "sdcard.h"
 #include <malloc.h>
+#include "diskio.h"
 
 // From ceeelib
 void _vcbprintf(void (*write)(void*, char), void* arg, const char* format, va_list args);
 
+
+uint64_t last_disk_read_time = 0;
+uint64_t last_disk_write_time = 0;
+uint64_t last_elapsed_time = 0;
+uint64_t last_serial_write_time = 0;
 
 typedef struct PACKED
 {
@@ -112,6 +118,7 @@ void ffsh_sleep(uint32_t ms)
 START_COMMAND_TABLE(flashy_command_table)
     COMMAND(reboot)
     COMMAND(chain)
+    COMMAND(time)
 END_COMMAND_TABLE
 
 bool dispatch_flashy_command(struct PROCESS* proc)
@@ -153,6 +160,11 @@ void handle_command(uint32_t seq, const void* p, uint32_t cb)
     stdio_buffer_used = 0;
     stdio_seq = seq;
 
+    disk_read_time = 0;
+    disk_write_time = 0;
+    serial_write_time = 0;
+    uint64_t start_time = micros();
+
     // Setup command context
     struct PROCESS proc;
     process_init(&proc, dispatch_flashy_command);
@@ -166,6 +178,12 @@ void handle_command(uint32_t seq, const void* p, uint32_t cb)
 
     // Send response
     finish_handle_command(&proc);
+
+    // Update times
+    last_disk_write_time = disk_write_time;
+    last_disk_read_time = disk_read_time;
+    last_serial_write_time = serial_write_time;
+    last_elapsed_time = micros() - start_time;
 }
 
 void finish_handle_command(struct PROCESS* proc)
