@@ -1,6 +1,7 @@
 let child_process = require('child_process');
 let os = require('os');
 let path = require('path');
+let fs = require('fs');
 
 // Run a command, return stdout
 function run(cmd)
