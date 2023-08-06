@@ -49,7 +49,7 @@ lib.defineType({
         "uint8 verMajor",
         "uint8 verMinor",
         "uint8 verBuild",
-        "uint8 _unused",
+        "uint8 verSubBuild",
         "uint32le raspi",
         "uint32le aarch",
         "uint32le boardRevision",
@@ -81,12 +81,12 @@ function checkVersion(ping, warning)
 {
     // Check version of flashy tool matches version of bootloader
     let pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')), "utf8");
-    let verParts = pkg.version.split('.').map(x => Number(x));
-    if (verParts[0] != ping.verMajor || verParts[1] != ping.verMinor || verParts[2] != ping.verBuild)
+    let verParts = pkg.version.replace("-alpha", "").split('.').map(x => Number(x));
+    if (verParts[0] != ping.verMajor || verParts[1] != ping.verMinor || verParts[2] != ping.verBuild || verParts[3] != ping.verSubBuild)
     {
         console.error("\nBootloader version mismatch:")
-        console.error(`    - bootloader version: ${ping.verMajor}.${ping.verMinor}.${ping.verBuild}`);
-        console.error(`    - flashy version: ${pkg.version}`);
+        console.error(`    - bootloader version: ${ping.verMajor}.${ping.verMinor}.${ping.verBuild}.${ping.verSubBuild}`);
+        console.error(`    - flashy version: ${verParts.join(".")}`);
         if (!warning)
         {
             let error = new Error(`Aborting. Use '--no-version-check' to override or the 'bootloader' command to get the latest images.`);
@@ -334,7 +334,7 @@ function layer(port, options)
                     process.stdout.write(`    - ${r.model.name}\n`);
                     process.stdout.write(`    - Serial: ${format_hex(r.boardSerialHi, 8)}-${format_hex(r.boardserialLo, 8)}\n`);
                     process.stdout.write(`    - CPU Clock: ${r.cpu_freq / 1000000}MHz (range: ${r.min_cpu_freq/1000000}-${r.max_cpu_freq/1000000}MHz)\n`);
-                    process.stdout.write(`    - Bootloader: rpi${r.raspi}-aarch${r.aarch} v${r.verMajor}.${r.verMinor}.${r.verBuild}, max packet size: ${r.maxPacketSize}\n`);
+                    process.stdout.write(`    - Bootloader: rpi${r.raspi}-aarch${r.aarch} v${r.verMajor}.${r.verMinor}.${r.verBuild}.${r.verSubBuild}, max packet size: ${r.maxPacketSize}\n`);
                 }
 
                 // Do packet size check
