@@ -7,9 +7,9 @@ ARCHFLAGS=-DBOOTLOADER
 default_target: sub-projects relocated_image
 
 # Pass flashy version from package.json to C code for the PING ack response
-FLASHY_VERSION := $(shell node -p "require('../flashy/package.json').version")
+FLASHY_VERSION := $(subst -alpha,,$(shell node -p "require('../flashy/package.json').version"))
 COMMA := ,
-DEFINE += FLASHY_VERSION=$(subst .,$(COMMA),$(FLASHY_VERSION)),0
+DEFINE += FLASHY_VERSION=$(subst .,$(COMMA),$(FLASHY_VERSION))
 TARGETSUFFIX=-himem
 
 INCLUDEPATH += ../lib/FFsh/FFsh/ff15/source

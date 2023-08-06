@@ -4,21 +4,17 @@
 #    echo "Uncommitted changes"
 #    exit
 #fi
+
+set -e
     
 # Clock version number
-pushd flashy
-npm version prerelease --preid=alpha
-popd
+(cd flashy && npm version prerelease --preid=alpha)
 
 # Build bootloader
-pushd bootloader
-cd bootloader && make aarch -B
-popd
+(cd bootloader && make aarch -B)
 
 ## Package it
-pushd flashy
-cd flashy && npm publish --access public
-popd
+(cd flashy && npm publish --access public)
 
 # Commit
 VERSION=`node -p require\(\"./flashy/package.json\"\).version`
