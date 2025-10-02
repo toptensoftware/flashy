@@ -249,7 +249,7 @@ try
 
         // If running under WSL2 and trying to use a regular serial port
         // relaunch self as a Windows process
-        if (wslUtils.isWsl2() && ctx.usesSerialPort)
+        if (wslUtils.isWsl2() && ctx.usesSerialPort && cl.port.match(/^COM\d+/i))
         {
             process.exit(wslUtils.runSelfUnderWindows());
         }

@@ -722,7 +722,7 @@ There's a couple of solutions for this:
 * Use USBIPD as [described here](https://learn.microsoft.com/en-us/windows/wsl/connect-usb), or
 * Install Flashy on both the Windows host and the WSL2 operating system and let it find itself.
 
-When flashy is launched in a WSL-2 environment with a `/dev/ttyS*` serial port name it will
+When flashy is launched in a WSL-2 environment with a `COM*` serial port name it will
 attempt to relaunch itself as a Windows process where it has access to the COM ports. 
 
 For this to work, Flashy needs to be installed as an npm global tool on both the Windows host
