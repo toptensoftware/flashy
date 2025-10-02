@@ -1,4 +1,4 @@
-let commandLineParser = require('./commandLineParser');
+import commandLineParser from './commandLineParser';
 
 async function run(ctx)
 {
@@ -13,7 +13,7 @@ async function run(ctx)
         
 }
 
-module.exports = {
+export default {
     synopsis: "Start a previously flashed image",
     spec: [
         {

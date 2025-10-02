@@ -8,7 +8,7 @@ async function run(ctx)
     await ctx.layer.ping(true);
 }
 
-module.exports = {
+export default {
     synopsis: "Display device bootloader status",
     spec: [
     ],

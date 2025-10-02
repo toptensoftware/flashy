@@ -3,26 +3,9 @@
 // 
 // Handles info logging, serial port data logging, switching baud rates etc.
 
-let os = require('os');
-let fs = require('fs');
-let SerialPort;
-
-// Load the serial port module and display handy message if can't
-if (!SerialPort)
-{
-    try
-    {
-        SerialPort = require('serialport');
-    }
-    catch (err)
-    {
-        console.log(`\nCan't find module 'serialport'.`);
-        console.log(`Please run 'npm install':\n`);
-        console.log(`   ` + __dirname + `$ npm install`);
-        process.exit(7);
-    }
-}
-
+import os from 'node:os';
+import fs from 'node:fs';
+import { SerialPort } from 'serialport';
 
 function serialPort(serialPortName, options)
 {
@@ -43,7 +26,7 @@ function serialPort(serialPortName, options)
     };
     let readCallback = null;
 
-    log = options.log;
+    let log = options.log;
 
     let fdLogFile = 0;
     if (options.logFilename)
@@ -70,6 +53,8 @@ function serialPort(serialPortName, options)
         serialPortName = remapped;
     }
 
+    serialPortOptions.path = serialPortName;
+
     // Open the serial port
     async function open()
     {
@@ -87,7 +72,7 @@ function serialPort(serialPortName, options)
         // Open it
         log && log(`Opening ${serialPortName} at ${serialPortOptions.baudRate.toLocaleString()} baud...`)
         logfile(`Opening ${serialPortName} at ${serialPortOptions.baudRate}...`)
-        port = new SerialPort(serialPortName, serialPortOptions, function(err) {
+        port = new SerialPort(serialPortOptions, function(err) {
             if (err)
             {
                 throw new Error(`Failed to open serial port: ${err.message}`);
@@ -227,4 +212,4 @@ function serialPort(serialPortName, options)
     
 }
 
-module.exports = serialPort;
+export default serialPort;

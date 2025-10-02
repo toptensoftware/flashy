@@ -1,5 +1,5 @@
-let path = require('path');
-let fs = require('fs');
+import path from 'node:path';
+import fs from 'node:fs';
 
 async function run(ctx)
 {
@@ -28,7 +28,7 @@ async function run(ctx)
 }
 
 
-module.exports = {
+export default {
     synopsis: "Extracts the packaged Flashy bootloader images to a directory, or prints the path to where the they can be found.",
     spec: [
         {

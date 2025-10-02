@@ -22,8 +22,7 @@
 // length encoding (7 bits per byte, MSB first, non-LSB bytes flagged with
 // top bit set ie: |= 0x80).
 
-
-let crc32 = require('./crc32');
+import crc32 from './crc32.js';
 
 // Special bytes
 const signal_byte = 0xAA;
@@ -68,7 +67,7 @@ function packet_encode(callback, seq, cmd, buf)
     }
 
     // Write crc
-    crcResult = crc32.finish(crc);
+    let crcResult = crc32.finish(crc);
     write((crcResult >>> 24) & 0xFF);
     write((crcResult >>> 16) & 0xFF);
     write((crcResult >>> 8) & 0xFF);
@@ -294,7 +293,7 @@ function packet_decoder(callback, error, maxlength)
     }
 }
 
-module.exports = {
+export default {
     encode: packet_encode,
     decode: packet_decoder,
 }

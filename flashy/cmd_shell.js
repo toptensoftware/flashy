@@ -1,5 +1,5 @@
-let nodeRepl = require('node:repl');
-let chalk = require('chalk');
+import nodeRepl from 'node:repl';
+import chalk from 'chalk';
 
 // Find the position in a command line string of the last argument
 function findLastArg(line)
@@ -182,7 +182,7 @@ async function run(ctx)
     await new Promise((resolve, reject) => {exitResolve = resolve});
 }
 
-module.exports = {
+export default {
     synopsis: "Opens an interactive command shell",
     spec: [
     ],

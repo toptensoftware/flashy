@@ -8,7 +8,7 @@ async function run(ctx)
     await new Promise((resolve, reject) => {});
 }
 
-module.exports = {
+export default {
     synopsis: "Display trace messages from bootloader",
     spec: [
     ],

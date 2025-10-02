@@ -535,6 +535,6 @@ function library()
 }
 
 
-module.exports = {
+export default {
     library
 };

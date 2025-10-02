@@ -16,7 +16,7 @@ async function run(ctx)
     return r.exitCode;
 }
 
-module.exports = {
+export default {
     synopsis: "Executes a shell command on the target device",
     spec: [
         {

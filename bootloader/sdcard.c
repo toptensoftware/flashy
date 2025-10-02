@@ -14,6 +14,12 @@ void trace(const char* format, ...);
 #define INFO trace
 #define ERROR trace
 
+void put(volatile uint32_t* addr, uint32_t value)
+{
+    //trace("%p = %x\n", addr, value);
+    *addr = value;
+}
+
 // Global variables
 static uint32_t g_rca = 0;          // RCA address of initialized card (0 if not initialized)
 static bool g_is_sdhc = false;      // True if initialized card supports sdhc
@@ -298,7 +304,7 @@ static int wait_data_done()
     /*
     if ((*EMMC_STATUS & STATUS_DAT_INHIBIT) == 0)
     {
-        *EMMC_INTERRUPT = 0xFFFF8000 | INTERRUPT_FLAG_DATA_DONE;
+        put(EMMC_INTERRUPT,  0xFFFF8000 | INTERRUPT_FLAG_DATA_DONE);
         return 0;
     }
     */
@@ -310,7 +316,7 @@ static int wait_data_done()
         return E_SD_CMD_TIMEOUT;
     }
 
-    // Alloow DTO error + data done
+    // Allow DTO error + data done
     if ((*EMMC_INTERRUPT & (0xFFFF0000|INTERRUPT_FLAG_DATA_DONE)) == (INTERRUPT_FLAG_DTO_ERR | INTERRUPT_FLAG_DATA_DONE))
         return 0;
 
@@ -345,9 +351,9 @@ static int issue_command(uint32_t command, uint32_t arg)
     TRACE("IssueCommand(%08x, %08x)\n", command, arg);
 
     // Send the command
-    *EMMC_INTERRUPT = 0xFFFFFFFF;           // Clear interrupt flag
-    *EMMC_ARG1 = arg;
-    *EMMC_CMDTM = command;
+    put(EMMC_INTERRUPT, 0xFFFFFFFF);           // Clear interrupt flag
+    put(EMMC_ARG1, arg);
+    put(EMMC_CMDTM, command);
 
     // Wait for command done, or error
     if (!wait_register_any_set(EMMC_INTERRUPT, INTERRUPT_FLAG_CMD_DONE | INTERRUPT_FLAG_ERR, TIMEOUT))
@@ -391,7 +397,7 @@ static int issue_read_command(uint32_t command, uint32_t arg, void* pBuffer, uin
     }
 
     // Issue command
-    *EMMC_BLKSIZECNT = blockSize | (blockCount << 16);
+    put(EMMC_BLKSIZECNT, blockSize | (blockCount << 16));
     err = issue_command(command, arg);
     if (err)
         return err;
@@ -417,7 +423,7 @@ static int issue_read_command(uint32_t command, uint32_t arg, void* pBuffer, uin
         }
 
         // Clear the read ready flag
-        *EMMC_INTERRUPT = INTERRUPT_FLAG_READ_RDY;
+        put(EMMC_INTERRUPT, INTERRUPT_FLAG_READ_RDY);
 
         // Read block
         for (uint16_t j=0; j < blockSize; j += sizeof(uint32_t))
@@ -453,7 +459,7 @@ static int issue_write_command(uint32_t command, uint32_t arg, const void* pBuff
     }
 
     // Setup block size and count
-    *EMMC_BLKSIZECNT = blockSize | (blockCount << 16);
+    put(EMMC_BLKSIZECNT, blockSize | (blockCount << 16));
 
     // Issue command
     err = issue_command(command, arg);
@@ -481,12 +487,12 @@ static int issue_write_command(uint32_t command, uint32_t arg, const void* pBuff
         }
 
         // Clear write ready flag
-        *EMMC_INTERRUPT = INTERRUPT_FLAG_WRITE_RDY;
+        put(EMMC_INTERRUPT, INTERRUPT_FLAG_WRITE_RDY);
 
         // Write block
         for (uint16_t j=0; j < blockSize; j += sizeof(uint32_t))
         {
-            *EMMC_DATA = *p++;
+            put(EMMC_DATA, *p++);
         }
     }    
 
@@ -503,7 +509,6 @@ static int issue_write_command(uint32_t command, uint32_t arg, const void* pBuff
 int sd_version_from_scr(uint32_t scr)
 {
     // Response is LE, need it in BE
-    scr = __builtin_bswap32(scr);
     uint32_t sd_spec = (scr >> (56-32)) & 0x0F;
     if (sd_spec == 0)
         return 0x10;
@@ -566,7 +571,7 @@ int reset_sdcard_internal()
     */
 
     // Clear error bits
-    *EMMC_CONTROL2 = 0;
+    put(EMMC_CONTROL2, 0);
 
     // Setup initialization clock
     int err = set_emmc_freq(400000);
@@ -574,16 +579,16 @@ int reset_sdcard_internal()
         return err;
 
     // No interrupts
-    *EMMC_IRPT_EN = 0;
-    *EMMC_IRPT_MASK = 0xFFFFFFFF;
+    put(EMMC_IRPT_EN, 0);
+    put(EMMC_IRPT_MASK, 0xFFFFFFFF);
 
     // Clear the interrupt register
     // (Note: when writing to the interrupt register, the written bits
     //  are cleared)
-    *EMMC_INTERRUPT = 0xFFFFFFFF;
+    put(EMMC_INTERRUPT, 0xFFFFFFFF);
 
     // Clear block size and count
-    *EMMC_BLKSIZECNT = 0;
+    put(EMMC_BLKSIZECNT, 0);
 
     // Go to idle state
     INFO("Sending CMD_GO_IDLE_STATE\n");
@@ -700,6 +705,9 @@ int reset_sdcard_internal()
     err = issue_read_command(ACMD_SEND_SCR, 0, &scr, 8, 1);
     if (err)
         return err;
+    scr[0] = __builtin_bswap32(scr[0]);
+    scr[1] = __builtin_bswap32(scr[1]);
+
     INFO("SCR: %.8x %.8x\n", scr[0], scr[1]);
 
     // Crack SD version
@@ -712,7 +720,6 @@ int reset_sdcard_internal()
 
     // Try to switch to high speed mode
     // Section 4.3.10 (p78)
-    /*
     if (sdVer >= 0x11)
     {
         INFO("Checking for high-speed mode\n");
@@ -738,20 +745,25 @@ int reset_sdcard_internal()
             INFO("Successfully switched to high speed mode\n");
         }
     }
-    */
 
     // Switch to 4-bit bus?
     if (busWidths & SD_BUS_WIDTH_4)
     {
+		uint32_t old_irpt_mask = *EMMC_IRPT_MASK;
+		uint32_t new_irpt_mask = old_irpt_mask & ~(1 << 8);
+		put(EMMC_IRPT_MASK, new_irpt_mask);
+
         INFO("Switching to 4-bit bus\n");
         err = issue_command(ACMD_SET_BUS_WIDTH, 2);
         if (err)
             return err;
 
         // Switch EMMC controller to 4-bit bus
-        *EMMC_CONTROL0 |= CONTROL0_HCTL_DWIDTH;
-    }
+        put(EMMC_CONTROL0, *EMMC_CONTROL0 | CONTROL0_HCTL_DWIDTH);
 
+		put(EMMC_IRPT_MASK, old_irpt_mask);
+    }
+   
     // Success
     INFO("SD Reset Finished\n");
     return 0;
@@ -796,6 +808,8 @@ int init_sdcard()
 // Read blocks from the SD card
 int read_sdcard(uint32_t blockNumber, uint32_t blockCount, void* pData)
 {
+    //trace("reading block: %u count: %u\n", blockNumber, blockCount);
+
     // Check initialized
     if (g_rca == 0)
         return E_SD_NOT_INITIALIZED;
@@ -821,6 +835,8 @@ int read_sdcard(uint32_t blockNumber, uint32_t blockCount, void* pData)
 // Write blocks to the SD card
 int write_sdcard(uint32_t blockNumber, uint32_t blockCount, const void* pData)
 {
+    //trace("writing block: %u count: %u\n", blockNumber, blockCount);
+
     // Check initialized
     if (g_rca == 0)
         return E_SD_NOT_INITIALIZED;

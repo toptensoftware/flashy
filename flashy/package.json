@@ -3,6 +3,7 @@
   "version": "3.0.0-alpha.4",
   "description": "All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal",
   "main": "flashy.js",
+  "type": "module",
   "dependencies": {
     "chalk": "^4.1.2",
     "decompress": "^4.2.1",

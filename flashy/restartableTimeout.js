@@ -30,4 +30,4 @@ class RestartableTimeout
     }
 }
 
-module.exports = RestartableTimeout;
+export default RestartableTimeout;

@@ -1,8 +1,8 @@
-let fs = require('fs');
-let path = require('path');
+import path from 'node:path';
+import fs from 'node:fs';
 
-let struct = require('./struct');
-let argUtils = require('./argUtils');
+import struct from './struct.js';
+import argUtils from './argUtils.js';
 
 let lib = struct.library();
 lib.defineType({
@@ -185,7 +185,7 @@ async function run(ctx)
     }
 }
 
-module.exports = {
+export default {
     synopsis: "Copies files from the device",
     spec: [
         {

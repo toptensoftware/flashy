@@ -1,7 +1,7 @@
-let child_process = require('child_process');
-let os = require('os');
-let path = require('path');
-let fs = require('fs');
+import child_process from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
+import fs from 'node:fs';
 
 // Run a command, return stdout
 function run(cmd)
@@ -71,7 +71,7 @@ function runSelfUnderWindows()
     process.exit(r.status);
 }    
 
-module.exports = {
+export default {
     isWsl2,
     runSelfUnderWindows,
 }

@@ -1,6 +1,6 @@
-let fs = require('fs');
-let path = require('path');
-let argUtils = require('./argUtils');
+import path from 'node:path';
+import fs from 'node:fs';
+import argUtils from './argUtils.js';
 
 async function push_file(ctx, local_path, remote_path)
 {
@@ -165,7 +165,7 @@ async function run(ctx)
     }
 }
 
-module.exports = {
+export default {
     synopsis: "Copies files to the device",
     spec: [
         {

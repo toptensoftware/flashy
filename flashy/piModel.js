@@ -57,6 +57,6 @@ function piModelFromRevision(revision)
     }
 }
 
-module.exports = {
+export default {
     piModelFromRevision,
 };

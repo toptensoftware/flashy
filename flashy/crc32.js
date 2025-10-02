@@ -76,7 +76,7 @@ function crc32_buffer(buf)
     return crc32_finish(crc);
 }
 
-module.exports = {
+export default {
     start: crc32_start,
     finish: crc32_finish,
     update: crc32_update,

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 // Utilies for parsing and rechunking Intel HEX files.
 
-let fs = require('fs');
+import fs from 'node:fs';
 
 function parse_nibble(ch)
 {
@@ -302,4 +302,4 @@ function chunker(parser, max_chunk_size, header_size)
     }
 }
 
-module.exports = { parser, chunker };
+export default { parser, chunker };

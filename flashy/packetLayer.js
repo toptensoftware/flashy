@@ -3,14 +3,15 @@
 //
 // Handles sending and receiving encoded packets to/from device
 
-let fs = require('fs');
-let path = require('path');
+import path from 'node:path';
+import fs from 'node:fs';
+import packenc from './packetEncoder.js';
+import piModel from './piModel.js';
+import RestartableTimeout from './restartableTimeout.js';
+import struct from './struct.js';
 
-let packenc = require('./packetEncoder');
-let piModel = require('./piModel');
-let RestartableTimeout = require('./restartableTimeout');
-let struct = require('./struct');
-
+import { fileURLToPath } from 'node:url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Packet ID's
 const PACKET_ID_PING = 0;
@@ -539,4 +540,4 @@ function layer(port, options)
 
 }
 
-module.exports = layer;
+export default layer;

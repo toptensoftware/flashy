@@ -1,6 +1,6 @@
-let path = require('path');
-let fs = require('fs');
-let os = require('os');
+import path from 'node:path';
+import fs from 'node:fs';
+import os from 'node:os';
 
 function glob_internal(filename, pattern, ixf, ixp, caseSensitive)
 {
@@ -155,7 +155,7 @@ function pathjoin(a, b)
 
 
 
-module.exports = {
+export default {
     glob,
     expandArg,
     expandArgs,

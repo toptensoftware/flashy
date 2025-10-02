@@ -14,7 +14,7 @@ async function run(ctx)
         process.stdout.write(` ok\n`);    
 }
 
-module.exports = {
+export default {
     synopsis: "Sends a magic reboot string to the device",
     spec: [
         {

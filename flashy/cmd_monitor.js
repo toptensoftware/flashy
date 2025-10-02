@@ -17,7 +17,7 @@ async function run(ctx)
     await new Promise((resolve) => { });
 }
 
-module.exports = {
+export default {
     synopsis: "Monitors serial port output",
     spec: [
     ],

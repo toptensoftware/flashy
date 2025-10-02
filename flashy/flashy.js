@@ -3,14 +3,18 @@
 ///////////////////////////////////////////////////////////////////////////////////
 // Flashy v2.0
 
-let os = require('os');
-let path = require('path');
-let fs = require('fs');
+import os from 'node:os';
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-let serial = require('./serial');
-let packetLayer = require('./packetLayer');
-let commandLineParser = require('./commandLineParser');
-let wslUtils = require('./wslUtils');
+import serial from './serial.js';
+import packetLayer from './packetLayer.js';
+import commandLineParser from './commandLineParser.js';
+import wslUtils from './wslUtils.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 
 // Commands
 let command_arg_specs = [
@@ -205,137 +209,135 @@ if (cl.cwd)
     process.chdir(cl.cwd);
     
 // Main!
-(async function() {
+let port;
+try
+{        
+    // Parse all commands
+    let commands = [];
+    let args = cl.$tail;
+    let command = cl.$command;
+    delete cl.$tail;
+    delete cl.$command;
+    while (args)
+    {
+        // Load the command handler
+        let command_handler = (await import(`./cmd_${command}.js`)).default;
 
-    let port;
-    try
-    {        
-        // Parse all commands
-        let commands = [];
-        let args = cl.$tail;
-        let command = cl.$command;
-        delete cl.$tail;
-        delete cl.$command;
-        while (args)
+        // Process the command's args
+        let command_parser = commandLineParser.parser({
+            usagePrefix: `flashy ${command}`,
+            packageDir: __dirname,
+            synopsis: command_handler.synopsis,
+            spec: [
+                ...command_handler.spec,
+                ...(command_handler.usesSerialPort !== false ? serial_arg_specs : []), 
+                ...common_arg_specs
+            ],
+        });
+
+        // Setup command context
+        let ctx = {
+            cl: command_parser.parse(args, cl),
+            handler: command_handler,
+            usesSerialPort: command_handler.usesSerialPort !== false,
+            usesPacketLayer: command_handler.usesSerialPort !== false && command_handler.usesPacketLayer !== false
+        };
+
+        // Handle command help and errors
+        command_parser.handle_help(ctx.cl);
+        command_parser.check(ctx.cl);
+
+        // If running under WSL2 and trying to use a regular serial port
+        // relaunch self as a Windows process
+        if (wslUtils.isWsl2() && ctx.usesSerialPort)
         {
-            // Load the command handler
-            let command_handler = require(`./cmd_${command}`);
+            process.exit(wslUtils.runSelfUnderWindows());
+        }
 
-            // Process the command's args
-            let command_parser = commandLineParser.parser({
-                usagePrefix: `flashy ${command}`,
-                packageDir: __dirname,
-                synopsis: command_handler.synopsis,
-                spec: [
-                    ...command_handler.spec,
-                    ...(command_handler.usesSerialPort !== false ? serial_arg_specs : []), 
-                    ...common_arg_specs
-                ],
+        // Next command
+        commands.push(ctx);
+
+        // Process next command
+        if (ctx.cl.$tail)
+        {
+            // Parse next command name
+            let tail_parser = commandLineParser.parser({
+                spec: command_arg_specs
             });
-
-            // Setup command context
-            let ctx = {
-                cl: command_parser.parse(args, cl),
-                handler: command_handler,
-                usesSerialPort: command_handler.usesSerialPort !== false,
-                usesPacketLayer: command_handler.usesSerialPort !== false && command_handler.usesPacketLayer !== false
-            };
-
-            // Handle command help and errors
-            command_parser.handle_help(ctx.cl);
-            command_parser.check(ctx.cl);
-
-            // If running under WSL2 and trying to use a regular serial port
-            // relaunch self as a Windows process
-            if (wslUtils.isWsl2() && ctx.usesSerialPort)
-            {
-                process.exit(wslUtils.runSelfUnderWindows());
-            }
-
-            // Next command
-            commands.push(ctx);
-
-            // Process next command
-            if (ctx.cl.$tail)
-            {
-                // Parse next command name
-                let tail_parser = commandLineParser.parser({
-                    spec: command_arg_specs
-                });
-                let tail_cl = tail_parser.parse(ctx.cl.$tail);
-                command = tail_cl.$command;
-                args = tail_cl.$tail;
-            }
-            else
-            {
-                break;
-            }
+            let tail_cl = tail_parser.parse(ctx.cl.$tail);
+            command = tail_cl.$command;
+            args = tail_cl.$tail;
         }
-
-        // Now execute all commands
-        for (let ctx of commands)
-        {        
-            // Open serial port if needed 
-            if (ctx.usesSerialPort)
-            {
-                // Close old port if different
-                if (port && ctx.cl.port != port.portName)
-                {
-                    await port.close();
-                    port = null;
-                }
-
-                // Create port
-                if (port == null)
-                {
-                    // Setup serial port
-                    port = serial(ctx.cl.port, {
-                        baudRate: 0,  // delay open until first baud rate switch
-                        log: ctx.cl.verbose ? (msg) => process.stdout.write(msg) : null,
-                        logFilename: ctx.cl.serialLog,
-                    });
-                    await port.open();
-                }
-
-                // Attach port to context
-                ctx.port = port;
-            }
-
-            // Create packet layer
-            if (ctx.usesPacketLayer)
-            {
-                let packetLayerOptions = {
-                    max_packet_size: Math.max(128, ctx.cl.packetSize),
-                    packet_ack_timeout: ctx.cl.packetTimeout,
-                    ping_ack_timeout: ctx.cl.pingTimeout,
-                    ping_attempts: ctx.cl.pingAttempts,
-                    check_version: !ctx.cl.noVersionCheck,
-                    log: ctx.cl.verbose ? (msg) => process.stdout.write(msg) : null,
-                };
-                ctx.layer = packetLayer(ctx.port, packetLayerOptions);
-            }
-
-            // Run the command
-            await ctx.handler.run(ctx);
-
-            // Disconnect packet layer from socket
-            if (ctx.port)
-                ctx.port.read(null);
-        }
-
-        if (commands.length == 0 && cl.verbose)
+        else
         {
-            process.stdout.write("Nothing to do.\n")
+            break;
         }
     }
-    catch (err)
-    {
-        console.error(err.message);
+
+    // Now execute all commands
+    for (let ctx of commands)
+    {        
+        // Open serial port if needed 
+        if (ctx.usesSerialPort)
+        {
+            // Close old port if different
+            if (port && ctx.cl.port != port.portName)
+            {
+                await port.close();
+                port = null;
+            }
+
+            // Create port
+            if (port == null)
+            {
+                // Setup serial port
+                port = serial(ctx.cl.port, {
+                    baudRate: 0,  // delay open until first baud rate switch
+                    log: ctx.cl.verbose ? (msg) => process.stdout.write(msg) : null,
+                    logFilename: ctx.cl.serialLog,
+                });
+                await port.open();
+            }
+
+            // Attach port to context
+            ctx.port = port;
+        }
+
+        // Create packet layer
+        if (ctx.usesPacketLayer)
+        {
+            let packetLayerOptions = {
+                max_packet_size: Math.max(128, ctx.cl.packetSize),
+                packet_ack_timeout: ctx.cl.packetTimeout,
+                ping_ack_timeout: ctx.cl.pingTimeout,
+                ping_attempts: ctx.cl.pingAttempts,
+                check_version: !ctx.cl.noVersionCheck,
+                log: ctx.cl.verbose ? (msg) => process.stdout.write(msg) : null,
+            };
+            ctx.layer = packetLayer(ctx.port, packetLayerOptions);
+        }
+
+        // Run the command
+        await ctx.handler.run(ctx);
+
+        // Disconnect packet layer from socket
+        if (ctx.port)
+            ctx.port.read(null);
     }
-    finally
+
+    if (commands.length == 0 && cl.verbose)
     {
-        // Clean up
-        if (port)
-            port.close();
+        process.stdout.write("Nothing to do.\n")
     }
-})();
+}
+catch (err)
+{
+    console.error(err.message);
+    throw err;
+}
+finally
+{
+    // Clean up
+    if (port)
+        await port.close();
+}

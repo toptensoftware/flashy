@@ -1,5 +1,5 @@
-let fs = require('fs');
-let path = require('path');
+import path from 'node:path';
+import fs from 'node:fs';
 
 // Parse a boolean value
 function parse_bool(value)
@@ -686,7 +686,7 @@ function parser(options)
     }
 }
 
-module.exports = {
+export default {
     parser,
     parse_bool,
     parse_enum,

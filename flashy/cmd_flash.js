@@ -1,8 +1,8 @@
-let path = require('path');
-let fs = require('fs');
+import path from 'node:path';
+import fs from 'node:fs';
 
-let commandLineParser = require('./commandLineParser');
-let intelHex = require('./intelHex');
+import commandLineParser from './commandLineParser';
+import intelHex from './intelHex';
 
 // Send a hex file to device
 async function sendHexFile(ctx, hexFile)
@@ -329,7 +329,7 @@ async function run(ctx)
 }
 
 
-module.exports = {
+export default {
     synopsis: "Flashes a kernel image to the target device",
     spec: [
         {
