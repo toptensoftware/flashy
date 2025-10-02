@@ -8,10 +8,10 @@
 set -e
     
 # Clock version number
-#npm version patch
+npm version patch
 
 # Build bootloader
-#(cd bootloader && make aarch -B)
+(cd bootloader && make aarch -B)
 
 # Commit
 VERSION=`node -p require\(\"./package.json\"\).version`
