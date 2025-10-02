@@ -83,7 +83,7 @@ function checkVersion(ping, warning)
     // Check version of flashy tool matches version of bootloader
     let pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json')), "utf8");
     let verParts = pkg.version.replace("-alpha", "").split('.').map(x => Number(x));
-    if (verParts[0] != ping.verMajor || verParts[1] != ping.verMinor || verParts[2] != ping.verBuild || verParts[3] != ping.verSubBuild)
+    if (verParts[0] != ping.verMajor || verParts[1] != ping.verMinor)
     {
         console.error("\nBootloader version mismatch:")
         console.error(`    - bootloader version: ${ping.verMajor}.${ping.verMinor}.${ping.verBuild}.${ping.verSubBuild}`);

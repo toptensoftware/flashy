@@ -13,9 +13,9 @@
             "type": "node",
             "program": "${workspaceFolder}/flashy/flashy.js",
             "args": [
-                "COM3", "status",
+                "/dev/ttyUSB0", "status",
             ],
-            "console": "externalTerminal"
+            //"console": "externalTerminal"
         }
     ]
 }
