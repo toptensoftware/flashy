@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import argUtils from './argUtils.js';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
