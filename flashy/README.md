@@ -103,6 +103,10 @@ npm install -g toptensoftware/flashy
 sudo npm install -g toptensoftware/flashy
 ```
 
+NOTE: flashy is now distributed directly from [github.com](https://github.com/toptensoftware.flashy) rather than from [npmjs.org](https://www.npmjs.com/package/@toptensoftware/flashy).  In the
+above commands be sure to use `toptensoftware.flashy` not `@toptensoftware/flashy` otherwise the old
+version from npm will be installed.
+
 ### Copy Bootloader
 
 Next you need to copy the bootloader kernel image files along with the other files require to boot 
@@ -719,8 +723,37 @@ of support for USB serial ports makes it difficult to flash a connected device.
 
 There's a couple of solutions for this:
 
-* Use USBIPD as [described here](https://learn.microsoft.com/en-us/windows/wsl/connect-usb), or
+* Use USBIPD
+* Use COM ports
 * Install Flashy on both the Windows host and the WSL2 operating system and let it find itself.
+
+### WSL with USBIPD
+
+Follow setup instructions [described here](https://learn.microsoft.com/en-us/windows/wsl/connect-usb).
+
+You might have to modify permissions to access the serial port.  The easiest approach to this is to
+add yourself to the `dialout` group (you'll need logout and log back in again for permissions to be updated).
+
+```
+sudo adduser `whoami` dialout
+logout
+```
+
+After following the steps described above you'll need to attach the USB port to the WSL machine 
+each time you connect the device.  You can use a script like the following on the WSL machine to 
+simplify this - change the `-b` arg  and `/dev/ttyUSB0` to match your setup:
+
+```
+usbipd.exe attach --wsl -b 2-2
+sleep 0.5s
+flashy /dev/ttyUSB0 status
+```
+
+Save as something like `attach-serial` (on the WSL machine) and put it in a folder on your path
+(eg: `~/bin` or `~/.local/bin`) (don't forget to `chmod +x` it)
+
+
+### WSL with COM ports
 
 When flashy is launched in a WSL-2 environment with a `COM*` serial port name it will
 attempt to relaunch itself as a Windows process where it has access to the COM ports. 
