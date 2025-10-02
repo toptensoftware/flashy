@@ -2,8 +2,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import commandLineParser from './commandLineParser';
-import intelHex from './intelHex';
+import commandLineParser from './commandLineParser.js';
+import intelHex from './intelHex.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

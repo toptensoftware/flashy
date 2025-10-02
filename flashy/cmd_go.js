@@ -1,4 +1,4 @@
-import commandLineParser from './commandLineParser';
+import commandLineParser from './commandLineParser.js';
 
 async function run(ctx)
 {
