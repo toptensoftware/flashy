@@ -333,7 +333,7 @@ try
 catch (err)
 {
     console.error(err.message);
-    throw err;
+    //throw err;
 }
 finally
 {
