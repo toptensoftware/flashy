@@ -72,7 +72,7 @@ is not 100% backwards compatible with the command line args used in v2).
 
 1. Install it:
 
-        > npm install -g @toptensoftware/flashy
+        > npm install -g toptensoftware/flashy
 
 2. Copy the bootloader kernel images to the Raspberry Pi SD card
 
@@ -95,12 +95,12 @@ installed, install Flashy as follows:
 
 ```
 # Windows
-npm install -g @toptensoftware/flashy
+npm install -g toptensoftware/flashy
 ```
 
 ```
 # Linux
-sudo npm install -g @toptensoftware/flashy
+sudo npm install -g toptensoftware/flashy
 ```
 
 ### Copy Bootloader
@@ -730,8 +730,8 @@ machine and the WSL guest operating system.
 
 ie: 
 
-* on Windows run: `npm install -g @toptensoftware/flashy`
-* and on WSL/Linux run: `sudo npm install -g @toptensoftware/flashy`
+* on Windows run: `npm install -g toptensoftware/flashy`
+* and on WSL/Linux run: `sudo npm install -g toptensoftware/flashy`
 
 Once installed in both environments, Flashy will detect when you're using a serial port, 
 find itself in Windows and relaunch itself automatically.

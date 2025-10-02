@@ -145,7 +145,7 @@ let common_arg_specs = [
 // Base command line options
 let parser = commandLineParser.parser({
     usagePrefix: "flashy",
-    packageDir: __dirname,
+    packageDir: path.dirname(__dirname),
     failOnUnknownArg: false,
     copyright: "Copyright (C) 2023 Topten Software\n"
             + "    https://www.toptensoftware.com\n"
@@ -226,7 +226,7 @@ try
         // Process the command's args
         let command_parser = commandLineParser.parser({
             usagePrefix: `flashy ${command}`,
-            packageDir: __dirname,
+            packageDir: path.dirname(__dirname),
             synopsis: command_handler.synopsis,
             spec: [
                 ...command_handler.spec,

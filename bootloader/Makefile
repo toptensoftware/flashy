@@ -7,7 +7,7 @@ ARCHFLAGS=-DBOOTLOADER
 default_target: sub-projects relocated_image
 
 # Pass flashy version from package.json to C code for the PING ack response
-FLASHY_VERSION := $(subst -alpha,,$(shell node -p "require('../flashy/package.json').version"))
+FLASHY_VERSION := $(subst -alpha,,$(shell node -p "require('../package.json').version"))
 COMMA := ,
 DEFINE += FLASHY_VERSION=$(subst .,$(COMMA),$(FLASHY_VERSION))
 TARGETSUFFIX=-himem
@@ -27,7 +27,7 @@ $(OUTDIR)/$(TARGETBASE).img: $(TARGET) relocstub/reloc.S
 	$(Q)$(PREFIX)ld $(@:%.img=%.o) -T link_script_$(AARCH) --no-warn-rwx-segments -Map $(@:%.img=%.map) -o $(@:%.img=%.elf)
 	$(Q)$(PREFIX)objdump -D $(@:%.img=%.elf) > $(@:%.img=%.lst)
 	$(Q)$(PREFIX)objcopy $(@:%.img=%.elf) -O binary $@
-	$(Q)cp $@ ../flashy/bootloader_images/
+	$(Q)cp $@ ../bootloader_images/
 
 relocated_image: sub-projects $(OUTDIR)/$(TARGETBASE).img
 

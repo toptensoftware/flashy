@@ -1,8 +1,11 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import commandLineParser from './commandLineParser';
 import intelHex from './intelHex';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Send a hex file to device
 async function sendHexFile(ctx, hexFile)
@@ -283,7 +286,7 @@ async function run(ctx)
         }5
 
         cl.imagefile = {
-            filename: path.join(path.dirname(__filename), "bootloader_images", "kernel" + suffix + ".img"),
+            filename: path.join(__dirname, "../bootloader_images", "kernel" + suffix + ".img"),
             kind: "img",
         }
     }

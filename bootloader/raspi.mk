@@ -41,10 +41,10 @@ ifeq ($(OS),Windows_NT)
 ARMTOOLS ?= Z:/armtools/
 ARMTOOLS_PLATFORM ?= mingw-w64-i686
 else
-ARMTOOLS ?= ~/armtools/
+ARMTOOLS ?= ~/Download/
 ARMTOOLS_PLATFORM ?= x86_64
 endif
-ARMTOOLS_VERSION=12.2.rel1
+ARMTOOLS_VERSION=14.3.rel1
 ifeq ($(AARCH),32)
 PREFIX ?= $(ARMTOOLS)/arm-gnu-toolchain-$(ARMTOOLS_VERSION)-$(ARMTOOLS_PLATFORM)-arm-none-eabi/bin/arm-none-eabi-
 STRICTALIGNFLAG := -mno-unaligned-access

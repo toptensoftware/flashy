@@ -2,6 +2,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import argUtils from './argUtils.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 async function push_file(ctx, local_path, remote_path)
 {
     if (ctx.cl.verbose)
@@ -110,7 +112,7 @@ async function run(ctx)
 
     if (ctx.cl.bootloader)
     {
-        ctx.cl.files.push(path.join(path.dirname(__filename), "bootloader_images", "kernel*.img"))
+        ctx.cl.files.push(path.join(__dirname, "../bootloader_images", "kernel*.img"))
     }
 
     // Expand files

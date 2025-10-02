@@ -7,3 +7,4 @@ bin
 *.elf
 *.lst
 *.map
+!bootloader_images/*

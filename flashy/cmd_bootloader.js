@@ -1,5 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function run(ctx)
 {
@@ -8,12 +11,12 @@ async function run(ctx)
     // Print the bootloader path
     if (cl.print)
     {
-        process.stdout.write(path.join(path.dirname(__filename), "bootloader_images"));
+        process.stdout.write(path.join(__dirname, "../bootloader_images") + "\n");
         return;
     }
     
     // Extract bootloader images
-    let sourceDir = path.join(path.dirname(__filename), "bootloader_images") 
+    let sourceDir = path.join(path.dirname(__dirname), "../bootloader_images") 
     let entries = fs.readdirSync(sourceDir, { withFileTypes: true });
     for (let entry of entries)
     {

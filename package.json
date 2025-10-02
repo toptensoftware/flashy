@@ -1,6 +1,6 @@
 {
-  "name": "@toptensoftware/flashy",
-  "version": "3.0.0-alpha.5",
+  "name": "flashy",
+  "version": "3.0.1",
   "description": "All-In-One Reboot, Flash and Monitor Tool for Raspberry Pi bare metal",
   "main": "flashy.js",
   "type": "module",
@@ -25,7 +25,7 @@
   },
   "license": "Apache",
   "bin": {
-    "flashy": "./flashy.js"
+    "flashy": "./flashy/flashy.js"
   },
   "preferGlobal": true,
   "keywords": [
