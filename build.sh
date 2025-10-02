@@ -8,13 +8,13 @@
 set -e
     
 # Clock version number
-npm version patch
+#npm version patch
 
 # Build bootloader
-(cd bootloader && make aarch -B)
+#(cd bootloader && make aarch -B)
 
 # Commit
-VERSION=`node -p require\(\"./flashy/package.json\"\).version`
+VERSION=`node -p require\(\"./package.json\"\).version`
 git add .
 git commit -m "Build $VERSION"
 git push
